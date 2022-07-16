@@ -9,17 +9,19 @@ option (transformer.go_models_file_path) = "src/git.biggorilla.tech/gateway/paym
 
 
 service PaymentGatewayService{
-  rpc CreateMerchant (MerchantRequest) returns (GenericReply) {}
+  rpc CreateMerchant (MerchantRequest) returns (MerchantRepsonse) {}
   rpc GenerateLink (GenerateLinkRequest) returns (GenericReply) {}
 }
 
 message MerchantRequest {
   string name = 1;
+  string email = 2;
 }
 message MerchantRepsonse{
   option (transformer.go_struct) = "Merchant";
-  string id = 1 [(transformer.map_to) = "ID"];
+  int64 id = 1 [(transformer.map_to) = "ID"];
   string name = 2 [(transformer.map_to) = "Name"];
+  string email = 3 [(transformer.map_to) = "Email"];
 }
 
 message GenerateLinkRequest{

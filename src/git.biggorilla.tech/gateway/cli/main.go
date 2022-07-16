@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
-	"time"
+	_ "time"
 
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"google.golang.org/grpc"
@@ -17,7 +17,6 @@ const (
 
 var (
 	addr = flag.String("addr", "localhost:50051", "the address to connect to")
-	name = flag.String("name", defaultName, "Name to greet")
 )
 
 func main() {
@@ -31,9 +30,10 @@ func main() {
 	c := pb.NewPaymentGatewayServiceClient(conn)
 
 	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
+
 	defer cancel()
-	r, err := c.CreateMerchant(ctx, &pb.MerchantRequest{Name: *name})
+	r, err := c.CreateMerchant(ctx, &pb.MerchantRequest{Name: "tnk", Email: "rxarinze@live.com"})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
