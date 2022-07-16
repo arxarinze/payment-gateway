@@ -1,0 +1,4 @@
+src/**/*.pb.go
+src/**/*.pb.gw.go
+src/**/transform/*.go
+src/**/mock/*.go

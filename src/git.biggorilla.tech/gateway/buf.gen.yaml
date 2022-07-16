@@ -1,0 +1,12 @@
+version: v1
+managed:
+  enabled: true
+plugins:
+  - name: go
+    out: ./
+    opt: paths=import
+  - name: go-grpc
+    out: ./
+    opt:
+      - paths=import
+      - require_unimplemented_servers=false

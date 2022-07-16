@@ -1,0 +1,11 @@
+version: v1
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/acme/paymentapis
+  - buf.build/innovation-upstream/protoc-gen-struct-transformer
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT

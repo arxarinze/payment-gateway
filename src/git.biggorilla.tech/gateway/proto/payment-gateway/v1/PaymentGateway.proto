@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package payment_gateway.v1;
+option go_package = "./payment-gateway/pb";
+import "options/annotations.proto";
+option (transformer.go_repo_package) = "model";
+option (transformer.go_protobuf_package) = "pb";
+option (transformer.go_models_file_path) = "src/git.biggorilla.tech/gateway/payment-gateway/model/model.go";
+
+
+service PaymentGatewayService{
+  rpc CreateMerchant (MerchantRequest) returns (GenericReply) {}
+  rpc GenerateLink (GenerateLinkRequest) returns (GenericReply) {}
+}
+
+message MerchantRequest {
+  string name = 1;
+}
+message MerchantRepsonse{
+  option (transformer.go_struct) = "Merchant";
+  string id = 1 [(transformer.map_to) = "ID"];
+  string name = 2 [(transformer.map_to) = "Name"];
+}
+
+message GenerateLinkRequest{
+    string merchant_id = 1;
+}
+
+message GenericReply {
+  int32 code = 1;
+  string message = 2;
+}
