@@ -60,8 +60,27 @@ func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*p
 }
 
 func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.GenericResponse, error) {
-	log.Printf("Received: %v", in.GetMerchantId())
-	return &pb.GenericResponse{Message: "Created Merchant with name " + in.GetMerchantId() + " successfully", Code: 200}, nil
+	auth, _ := grpcMetadata.FromIncomingContext(ctx)
+	id := s.identity.GetIdentity(auth)
+	in.MerchantId = id
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, dbport, user, password, dbname)
+	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
+	merchantRepo := repo.NewMerchantRepo(ctx, &db)
+	data, err1 := merchantRepo.GenerateLink(ctx, in.GetMerchantId())
+	out, err2 := json.Marshal(data)
+	if err2 != nil || err1 != nil {
+		return &pb.GenericResponse{
+			Code:    500,
+			Message: err2.Error() + err1.Error(),
+		}, nil
+	}
+	defer db.Close()
+	return &pb.GenericResponse{
+		Code:    200,
+		Message: string(out),
+	}, nil
 }
 
 func main() {

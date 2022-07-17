@@ -1,6 +1,6 @@
 package models
 
-type Request struct {
+type MerchantRequest struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
