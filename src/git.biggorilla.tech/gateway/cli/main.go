@@ -27,11 +27,11 @@ func main() {
 	c := pb.NewPaymentGatewayServiceClient(conn)
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-	ctx = grpcMetadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.W_lCxFcvTFKhyIIKs2Gvt5po-1fbClJASCxmu9EDcOElove")
+	ctx = grpcMetadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
 	defer cancel()
-	r, err := c.CreateMerchant(ctx, &pb.MerchantRequest{Name: "kanma", Email: "kxarinze@live.com"})
+	r, err := c.CreateMerchant(ctx, &pb.MerchantRequest{Name: "tnk", Email: "rxarinze@live.com"})
 	if err != nil {
-		log.Printf("Greeting: %s", r)
+		log.Printf("Greeting: %s", err)
 	}
 	log.Printf("Greeting: %s", r)
 }

@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"context"
-	"log"
+	_ "fmt"
+	_ "log"
 	"strings"
 
 	helper "git.biggorilla.tech/gateway/payment-gateway/helpers"
+	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	_ "git.biggorilla.tech/gateway/payment-gateway/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -38,10 +40,13 @@ func (r *middleware) UnaryInterceptor(
 	values := md["authorization"]
 	accessToken := values[0]
 	token := strings.Split(accessToken, " ")
-	claims, err := r.jwtManager.Verify(token[1])
-	if err == nil {
-		return handler(ctx, req)
+	_, err := r.jwtManager.Verify(token[1])
+	if err != nil {
+		return &pb.GenericResponse{
+			Code:    403,
+			Message: "Forbidden",
+		}, nil
 	}
-	log.Println("love --> unary interceptor: ", info.FullMethod, req, claims)
-	return nil, err
+	//log.Println("love --> unary interceptor: ", claims)
+	return handler(ctx, req)
 }

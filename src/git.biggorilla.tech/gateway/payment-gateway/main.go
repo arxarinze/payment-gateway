@@ -17,6 +17,7 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
 	"google.golang.org/grpc"
+	grpcMetadata "google.golang.org/grpc/metadata"
 )
 
 const (
@@ -32,15 +33,18 @@ var (
 )
 
 type server struct {
+	identity helpers.Identity
 }
 
 func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.GenericResponse, error) {
+	auth, _ := grpcMetadata.FromIncomingContext(ctx)
+	id := s.identity.GetIdentity(auth)
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, dbport, user, password, dbname)
 	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
 	merchantRepo := repo.NewMerchantRepo(ctx, &db)
-	data, err1 := merchantRepo.CreateMerchant(ctx, in.GetName(), in.GetEmail())
+	data, err1 := merchantRepo.CreateMerchant(ctx, in.GetName(), in.GetEmail(), id)
 	out, err2 := json.Marshal(data)
 	if err2 != nil || err1 != nil {
 		return &pb.GenericResponse{
@@ -48,7 +52,6 @@ func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*p
 			Message: err2.Error() + err1.Error(),
 		}, nil
 	}
-	fmt.Println(in, data.Email)
 	defer db.Close()
 	return &pb.GenericResponse{
 		Code:    200,
@@ -70,7 +73,9 @@ func main() {
 	jwtManager := helpers.NewJWTManager("testtest123", 15*time.Minute)
 	m := middleware.NewMiddleware(context.Background(), *jwtManager).UnaryInterceptor
 	s := grpc.NewServer(grpc.UnaryInterceptor(m))
-	pb.RegisterPaymentGatewayServiceServer(s, &server{})
+	pb.RegisterPaymentGatewayServiceServer(s, &server{
+		identity: helpers.NewIdentity(context.Background()),
+	})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

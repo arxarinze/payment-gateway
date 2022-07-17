@@ -22,6 +22,7 @@ message MerchantRepsonse{
   int64 id = 1 [(transformer.map_to) = "ID"];
   string name = 2 [(transformer.map_to) = "Name"];
   string email = 3 [(transformer.map_to) = "Email"];
+  string user_id = 4 [(transformer.map_to) = "UserID"];
 }
 
 message GenerateLinkRequest{

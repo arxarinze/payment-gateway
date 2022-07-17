@@ -9,7 +9,7 @@ import (
 )
 
 type MerchantRepo interface {
-	CreateMerchant(ctx context.Context, name string, email string) (*model.Merchant, error)
+	CreateMerchant(ctx context.Context, name string, email string, user_id string) (*model.Merchant, error)
 }
 
 type merchantRepo struct {
@@ -26,20 +26,22 @@ func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {
 	}
 }
 
-func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email string) (*model.Merchant, error) {
+func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email string, user_id string) (*model.Merchant, error) {
 
-	sqlStatement := `INSERT INTO merchants (name, email) 
-	VALUES ($1, $2) RETURNING id, name, email`
+	sqlStatement := `INSERT INTO merchants (name, email, user_id) 
+	VALUES ($1, $2, $3) RETURNING id, name, email, user_id`
 	idt := 0
 	emailt := ""
 	namet := ""
-	err := r.db.QueryRow(sqlStatement, name, email).Scan(&idt, &namet, &emailt)
+	user_idt := ""
+	err := r.db.QueryRow(sqlStatement, name, email, user_id).Scan(&idt, &namet, &emailt, &user_idt)
 	if err != nil {
 		panic(err)
 	}
 	return &model.Merchant{
-		Name:  namet,
-		ID:    int64(idt),
-		Email: emailt,
+		Name:   namet,
+		ID:     int64(idt),
+		Email:  emailt,
+		UserID: user_id,
 	}, nil
 }
