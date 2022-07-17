@@ -2,13 +2,18 @@ package main
 
 import (
 	"context"
-	sql "database/sql"
+	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"net"
+	"time"
 
+	_ "github.com/lib/pq"
+
+	"git.biggorilla.tech/gateway/payment-gateway/database"
+	"git.biggorilla.tech/gateway/payment-gateway/helpers"
+	"git.biggorilla.tech/gateway/payment-gateway/middleware"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
 	"google.golang.org/grpc"
@@ -27,40 +32,33 @@ var (
 )
 
 type server struct {
-	pb.UnsafePaymentGatewayServiceServer
-	merchantRepo repo.MerchantRepo
 }
 
-func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.MerchantRepsonse, error) {
+func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.GenericResponse, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, dbport, user, password, dbname)
-	db := _connectDatbase(psqlInfo)
-	s.merchantRepo = repo.NewMerchantRepo(ctx, &db)
-	data, err := s.merchantRepo.CreateMerchant(ctx, in.GetName(), in.GetEmail())
-	if err != nil {
-		panic(err)
+	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
+	merchantRepo := repo.NewMerchantRepo(ctx, &db)
+	data, err1 := merchantRepo.CreateMerchant(ctx, in.GetName(), in.GetEmail())
+	out, err2 := json.Marshal(data)
+	if err2 != nil || err1 != nil {
+		return &pb.GenericResponse{
+			Code:    500,
+			Message: err2.Error() + err1.Error(),
+		}, nil
 	}
 	fmt.Println(in, data.Email)
 	defer db.Close()
-	return &pb.MerchantRepsonse{
-		Id:    data.ID,
-		Name:  data.Name,
-		Email: data.Email,
+	return &pb.GenericResponse{
+		Code:    200,
+		Message: string(out),
 	}, nil
 }
 
-func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.GenericReply, error) {
+func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.GenericResponse, error) {
 	log.Printf("Received: %v", in.GetMerchantId())
-	return &pb.GenericReply{Message: "Created Merchant with name " + in.GetMerchantId() + " successfully", Code: 200}, nil
-}
-
-func _connectDatbase(psqlInfo string) sql.DB {
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
-	return *db
+	return &pb.GenericResponse{Message: "Created Merchant with name " + in.GetMerchantId() + " successfully", Code: 200}, nil
 }
 
 func main() {
@@ -69,7 +67,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
+	jwtManager := helpers.NewJWTManager("testtest123", 15*time.Minute)
+	m := middleware.NewMiddleware(context.Background(), *jwtManager).UnaryInterceptor
+	s := grpc.NewServer(grpc.UnaryInterceptor(m))
 	pb.RegisterPaymentGatewayServiceServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {

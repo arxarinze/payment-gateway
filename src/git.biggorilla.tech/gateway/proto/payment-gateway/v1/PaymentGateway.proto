@@ -9,8 +9,8 @@ option (transformer.go_models_file_path) = "src/git.biggorilla.tech/gateway/paym
 
 
 service PaymentGatewayService{
-  rpc CreateMerchant (MerchantRequest) returns (MerchantRepsonse) {}
-  rpc GenerateLink (GenerateLinkRequest) returns (GenericReply) {}
+  rpc CreateMerchant (MerchantRequest) returns (GenericResponse) {}
+  rpc GenerateLink (GenerateLinkRequest) returns (GenericResponse) {}
 }
 
 message MerchantRequest {
@@ -28,7 +28,7 @@ message GenerateLinkRequest{
     string merchant_id = 1;
 }
 
-message GenericReply {
+message GenericResponse {
   int32 code = 1;
   string message = 2;
 }

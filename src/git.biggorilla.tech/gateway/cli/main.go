@@ -9,10 +9,7 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-)
-
-const (
-	defaultName = "world"
+	grpcMetadata "google.golang.org/grpc/metadata"
 )
 
 var (
@@ -28,14 +25,13 @@ func main() {
 	}
 	defer conn.Close()
 	c := pb.NewPaymentGatewayServiceClient(conn)
-
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-
+	ctx = grpcMetadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.W_lCxFcvTFKhyIIKs2Gvt5po-1fbClJASCxmu9EDcOElove")
 	defer cancel()
-	r, err := c.CreateMerchant(ctx, &pb.MerchantRequest{Name: "tnk", Email: "rxarinze@live.com"})
+	r, err := c.CreateMerchant(ctx, &pb.MerchantRequest{Name: "kanma", Email: "kxarinze@live.com"})
 	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+		log.Printf("Greeting: %s", r)
 	}
 	log.Printf("Greeting: %s", r)
 }
