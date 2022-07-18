@@ -1,23 +1,26 @@
 syntax = "proto3";
 
 package payment_gateway.v1;
-option go_package = "./payment-gateway/pb";
+
 import "options/annotations.proto";
-option (transformer.go_repo_package) = "model";
-option (transformer.go_protobuf_package) = "pb";
+
+option go_package = "./payment-gateway/pb";
 option (transformer.go_models_file_path) = "src/git.biggorilla.tech/gateway/payment-gateway/model/model.go";
+option (transformer.go_protobuf_package) = "pb";
+option (transformer.go_repo_package) = "model";
 
-
-service PaymentGatewayService{
-  rpc CreateMerchant (MerchantRequest) returns (GenericResponse) {}
-  rpc GenerateLink (GenerateLinkRequest) returns (GenericResponse) {}
+service PaymentGatewayService {
+  rpc CreateMerchant(MerchantRequest) returns (GenericResponse) {}
+  rpc GenerateLink(GenerateLinkRequest) returns (GenericResponse) {}
+  rpc GetPluginLink(PluginLinkRequest) returns (GenericResponse) {}
+  rpc GenerateDepositAddress(DepositAddressRequest) returns (DepositAddressResponse) {}
 }
 
 message MerchantRequest {
   string name = 1;
   string email = 2;
 }
-message MerchantRepsonse{
+message MerchantRepsonse {
   option (transformer.go_struct) = "Merchant";
   int64 id = 1 [(transformer.map_to) = "ID"];
   string name = 2 [(transformer.map_to) = "Name"];
@@ -25,8 +28,20 @@ message MerchantRepsonse{
   string user_id = 4 [(transformer.map_to) = "UserID"];
 }
 
-message GenerateLinkRequest{
-    string merchant_id = 1;
+message DepositAddressRequest {
+  string cryptosymbol = 1;
+  string network = 2;
+}
+
+message DepositAddressResponse {
+  string address = 1;
+}
+
+message GenerateLinkRequest {
+  string merchant_id = 1;
+}
+message PluginLinkRequest {
+  string merchant_id = 1;
 }
 
 message GenericResponse {

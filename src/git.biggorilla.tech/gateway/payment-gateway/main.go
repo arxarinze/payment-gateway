@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -16,8 +15,8 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/middleware"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
+	pRPC "git.biggorilla.tech/gateway/payment-gateway/rpc"
 	"google.golang.org/grpc"
-	grpcMetadata "google.golang.org/grpc/metadata"
 )
 
 const (
@@ -29,59 +28,11 @@ const (
 )
 
 var (
-	port = flag.Int("port", 50051, "The server port")
+	port     = flag.Int("port", 50051, "The server port")
+	psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, dbport, user, password, dbname)
 )
-
-type server struct {
-	identity helpers.Identity
-}
-
-func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.GenericResponse, error) {
-	auth, _ := grpcMetadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, dbport, user, password, dbname)
-	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
-	merchantRepo := repo.NewMerchantRepo(ctx, &db)
-	data, err1 := merchantRepo.CreateMerchant(ctx, in.GetName(), in.GetEmail(), id)
-	out, err2 := json.Marshal(data)
-	if err2 != nil || err1 != nil {
-		return &pb.GenericResponse{
-			Code:    500,
-			Message: err2.Error() + err1.Error(),
-		}, nil
-	}
-	defer db.Close()
-	return &pb.GenericResponse{
-		Code:    200,
-		Message: string(out),
-	}, nil
-}
-
-func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.GenericResponse, error) {
-	auth, _ := grpcMetadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
-	in.MerchantId = id
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, dbport, user, password, dbname)
-	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
-	merchantRepo := repo.NewMerchantRepo(ctx, &db)
-	data, err1 := merchantRepo.GenerateLink(ctx, in.GetMerchantId())
-	out, err2 := json.Marshal(data)
-	if err2 != nil || err1 != nil {
-		return &pb.GenericResponse{
-			Code:    500,
-			Message: err2.Error() + err1.Error(),
-		}, nil
-	}
-	defer db.Close()
-	return &pb.GenericResponse{
-		Code:    200,
-		Message: string(out),
-	}, nil
-}
 
 func main() {
 	flag.Parse()
@@ -89,13 +40,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+	ctx := context.Background()
 	jwtManager := helpers.NewJWTManager("testtest123", 15*time.Minute)
 	m := middleware.NewMiddleware(context.Background(), *jwtManager).UnaryInterceptor
 	s := grpc.NewServer(grpc.UnaryInterceptor(m))
-	pb.RegisterPaymentGatewayServiceServer(s, &server{
-		identity: helpers.NewIdentity(context.Background()),
-	})
+	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
+	identity := helpers.NewIdentity(ctx)
+	merchantRepo := repo.NewMerchantRepo(ctx, &db)
+	rpc := pRPC.NewRPCInterface(ctx, identity, merchantRepo)
+	pb.RegisterPaymentGatewayServiceServer(s, rpc)
 	log.Printf("server listening at %v", lis.Addr())
+	defer db.Close()
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
