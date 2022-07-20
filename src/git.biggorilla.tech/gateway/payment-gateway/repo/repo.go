@@ -7,18 +7,21 @@ import (
 	sql "database/sql"
 	"encoding/base64"
 	"fmt"
-
 	"git.biggorilla.tech/gateway/payment-gateway/model"
+	"git.biggorilla.tech/gateway/payment-gateway/services/web3"
 	_ "github.com/lib/pq"
+	"strings"
 )
 
 type MerchantRepo interface {
-	CreateMerchant(ctx context.Context, name string, email string, user_id string) (*model.Merchant, error)
-	GenerateLink(ctx context.Context, id string) (*model.Link, error)
+	CreateMerchant(ctx context.Context, name string, email string, user_id string) (interface{}, error)
+	GenerateLink(ctx context.Context, id string) (interface{}, error)
+	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, user_id string) string
 }
 
 type merchantRepo struct {
-	db *sql.DB
+	db  *sql.DB
+	ctx context.Context
 }
 
 func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {
@@ -28,10 +31,36 @@ func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {
 	}
 	return &merchantRepo{
 		db,
+		ctx,
 	}
 }
 
-func (r *merchantRepo) GenerateLink(ctx context.Context, id string) (*model.Link, error) {
+func (r *merchantRepo) GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, user_id string) string {
+	selectStatment := `SELECT address FROM accounts WHERE user_id='` + user_id + `' AND network ='` + network + `'`
+	data1, err1 := r.db.Query(selectStatment)
+	if err1 != nil {
+		fmt.Println("dsadsa", err1)
+	}
+	var taddress string
+	data1.Next()
+	data1.Scan(&taddress)
+	fmt.Println(taddress)
+	if taddress == "" {
+		sqlStatement := `INSERT INTO accounts (user_id, address, private_key, coin, network)
+	VALUES ($1, $2, $3, $4, $5) RETURNING address`
+		data := s.GenerateNewAddress()
+		addresst := ""
+		err := r.db.QueryRow(sqlStatement, user_id, data.PublicKey, data.PrivateKey, coin, network).Scan(&addresst)
+		if err != nil {
+			panic(err)
+		}
+		return addresst
+	}
+
+	return taddress
+}
+
+func (r *merchantRepo) GenerateLink(ctx context.Context, id string) (interface{}, error) {
 	data := []byte(id)
 	hash := sha256.Sum256(data)
 	plugin_id := fmt.Sprint(hash)
@@ -44,7 +73,16 @@ func (r *merchantRepo) GenerateLink(ctx context.Context, id string) (*model.Link
 	user_idt := ""
 	err := r.db.QueryRow(sqlStatement, plugin_id, id).Scan(&idt, &plugin_idt, &user_idt)
 	if err != nil {
-		panic(err)
+		if strings.Contains(err.Error(), "duplicate key") {
+			return &model.GenericResponse{
+				Code:    409,
+				Message: "Already Generated Link",
+			}, nil
+		}
+		return &model.GenericResponse{
+			Code:    500,
+			Message: "Error Occured",
+		}, nil
 	}
 	return &model.Link{
 		ID:       int64(idt),
@@ -53,7 +91,7 @@ func (r *merchantRepo) GenerateLink(ctx context.Context, id string) (*model.Link
 	}, nil
 }
 
-func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email string, user_id string) (*model.Merchant, error) {
+func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email string, user_id string) (interface{}, error) {
 
 	sqlStatement := `INSERT INTO merchants (name, email, user_id) 
 	VALUES ($1, $2, $3) RETURNING id, name, email, user_id`
@@ -63,7 +101,16 @@ func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email st
 	user_idt := ""
 	err := r.db.QueryRow(sqlStatement, name, email, user_id).Scan(&idt, &namet, &emailt, &user_idt)
 	if err != nil {
-		panic(err)
+		if strings.Contains(err.Error(), "duplicate key") {
+			return &model.GenericResponse{
+				Code:    409,
+				Message: "Already Created Merchant",
+			}, err
+		}
+		return &model.GenericResponse{
+			Code:    500,
+			Message: "Error Occured",
+		}, err
 	}
 	return &model.Merchant{
 		Name:   namet,

@@ -16,6 +16,7 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
 	pRPC "git.biggorilla.tech/gateway/payment-gateway/rpc"
+	"git.biggorilla.tech/gateway/payment-gateway/services/web3"
 	"google.golang.org/grpc"
 )
 
@@ -36,22 +37,23 @@ var (
 
 func main() {
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	ctx := context.Background()
 	jwtManager := helpers.NewJWTManager("testtest123", 15*time.Minute)
-	m := middleware.NewMiddleware(context.Background(), *jwtManager).UnaryInterceptor
-	s := grpc.NewServer(grpc.UnaryInterceptor(m))
+	middleware := middleware.NewMiddleware(context.Background(), *jwtManager).UnaryInterceptor
+	server := grpc.NewServer(grpc.UnaryInterceptor(middleware))
 	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
 	identity := helpers.NewIdentity(ctx)
 	merchantRepo := repo.NewMerchantRepo(ctx, &db)
-	rpc := pRPC.NewRPCInterface(ctx, identity, merchantRepo)
-	pb.RegisterPaymentGatewayServiceServer(s, rpc)
-	log.Printf("server listening at %v", lis.Addr())
+	ethereumClient := services.NewEthereumService(ctx)
+	rpc := pRPC.NewRPCInterface(ctx, identity, merchantRepo, ethereumClient)
+	pb.RegisterPaymentGatewayServiceServer(server, rpc)
+	log.Printf("server listening at %v", listen.Addr())
 	defer db.Close()
-	if err := s.Serve(lis); err != nil {
+	if err := server.Serve(listen); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
