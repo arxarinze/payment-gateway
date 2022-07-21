@@ -26,6 +26,11 @@
           ? (amountUSD = 0.0)
           : (amountUSD = parseFloat(cryptoAmount) * 500);
         break;
+      case "USDC":
+        cryptoAmount === ""
+          ? (amountUSD = 0.0)
+          : (amountUSD = parseFloat(cryptoAmount));
+        break;
       default:
         break;
     }

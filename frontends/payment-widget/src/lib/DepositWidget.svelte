@@ -1,6 +1,5 @@
 <script defer lang="ts">
   export let data: any;
-  export let pluginid;
   import QrCode from "qrcode";
   import { loadImage } from "canvas";
   import { onMount } from "svelte";
@@ -12,7 +11,7 @@
       "http://localhost:5001/api/v1/generate-deposit-address",
       {
         crypto_symbol: data.coin.symbol,
-        network: "ethereum",
+        network: data.coin.network,
       }
     );
     console.log("love1", address.data);

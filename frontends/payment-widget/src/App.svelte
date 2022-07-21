@@ -29,9 +29,10 @@
   let data1 = loadPlugin(path);
 
   let coins = [
-    { id: "0", symbol: "BTC", text: "Bitcoin" },
-    { id: "1", symbol: "USDT", text: "USD Tether (ERC-20)" },
-    { id: "2", symbol: "ETH", text: "Ethereum" },
+    { id: "0", symbol: "BTC", text: "Bitcoin", network:"bitcoin" },
+    { id: "1", symbol: "USDT", text: "USD Tether", network:"ethereum" },
+    { id: "2", symbol: "ETH", text: "Ethereum", network:"ethereum" },
+    { id: "3", symbol: "USDC", text: "USD COin", network:"ethereum" },
   ];
 
   let selectedCoin;
