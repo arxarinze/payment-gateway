@@ -9,9 +9,10 @@ type (
 	}
 
 	Link struct {
-		ID       int64  `json:"id"`
-		PluginID string `json:"plugin_id"`
-		UserID   string `json:"user_id"`
+		ID         int64  `json:"id"`
+		PluginID   string `json:"plugin_id"`
+		UserID     string `json:"user_id"`
+		MerchantID string `json:"merchant_id"`
 	}
 
 	Address struct {

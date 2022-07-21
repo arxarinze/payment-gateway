@@ -25,27 +25,37 @@ func NewRPCInterface(ctx context.Context, identity helpers.Identity, repo repo.M
 		ethereumClient,
 	}
 }
-func (s *server) GetPluginLink(ctx context.Context, in *pb.PluginLinkRequest) (*pb.GenericResponse, error) {
 
-	return &pb.GenericResponse{}, nil
+func (s *server) GetPublicMerchantInfo(ctx context.Context, in *pb.MerchantPublicRequest) (*pb.MerchantPublicResponse, error) {
+	data, err := s.repo.GetPublicMerchantInfo(ctx, in.GetPluginId())
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
-func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.GenericResponse, error) {
+func (s *server) GetPluginLink(ctx context.Context, in *pb.PluginLinkRequest) (*pb.LinkResponse, error) {
 	auth, _ := metadata.FromIncomingContext(ctx)
 	id := s.identity.GetIdentity(auth)
-	in.MerchantId = id
-	data, err1 := s.repo.GenerateLink(ctx, in.GetMerchantId())
-	if err1 != nil {
-		return &pb.GenericResponse{
-			Code:    500,
-			Message: err1.Error(),
-		}, nil
-	}
-	a := data.(*model.GenericResponse)
-	return &pb.GenericResponse{
-		Code:    int32(a.Code),
-		Message: a.Message,
+	link := s.repo.GetPluginLink(ctx, id, in.GetMerchantId())
+	return &pb.LinkResponse{
+		Link: link,
 	}, nil
+}
+
+func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.LinkResponse, error) {
+	auth, _ := metadata.FromIncomingContext(ctx)
+	id := s.identity.GetIdentity(auth)
+	data, err1 := s.repo.GenerateLink(ctx, in.GetMerchantId(), id)
+	if err1 != nil {
+		return &pb.LinkResponse{
+			Link: "",
+		}, err1
+	}
+	a := data.(*model.Link)
+	return &pb.LinkResponse{
+		Link: a.PluginID,
+	}, err1
 }
 func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.GenericResponse, error) {
 	auth, _ := metadata.FromIncomingContext(ctx)

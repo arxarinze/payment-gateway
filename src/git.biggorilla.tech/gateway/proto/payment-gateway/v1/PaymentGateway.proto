@@ -11,14 +11,32 @@ option (transformer.go_repo_package) = "model";
 
 service PaymentGatewayService {
   rpc CreateMerchant(MerchantRequest) returns (GenericResponse) {}
-  rpc GenerateLink(GenerateLinkRequest) returns (GenericResponse) {}
-  rpc GetPluginLink(PluginLinkRequest) returns (GenericResponse) {}
+  rpc GenerateLink(GenerateLinkRequest) returns (LinkResponse) {}
+  rpc GetPluginLink(PluginLinkRequest) returns (LinkResponse) {}
   rpc GenerateDepositAddress(DepositAddressRequest) returns (DepositAddressResponse) {}
+  rpc GetPublicMerchantInfo(MerchantPublicRequest) returns (MerchantPublicResponse) {}
 }
 
 message MerchantRequest {
   string name = 1;
   string email = 2;
+}
+
+message MerchantPublicResponse {
+  string name = 1;
+  string email = 2;
+  optional string address = 3;
+  optional string avatar = 4;
+  string merchant_id = 5;
+  string user_id = 6;
+}
+
+message MerchantPublicRequest {
+  string plugin_id = 1;
+}
+
+message LinkResponse {
+  string link = 1;
 }
 message MerchantRepsonse {
   option (transformer.go_struct) = "Merchant";
