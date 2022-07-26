@@ -6,8 +6,11 @@ import (
 	"crypto/sha256"
 	sql "database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
+	"time"
 
 	"git.biggorilla.tech/gateway/payment-gateway/model"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
@@ -18,8 +21,8 @@ import (
 type MerchantRepo interface {
 	CreateMerchant(ctx context.Context, name string, email string, user_id string) (interface{}, error)
 	GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error)
-	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, user_id string) string
-	GetPluginLink(ctx context.Context, user_id string, merchant_id string) string
+	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error)
+	GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) string
 	GetPublicMerchantInfo(ctx context.Context, plugin_id string) (*pb.MerchantPublicResponse, error)
 }
 
@@ -66,7 +69,7 @@ func (r *merchantRepo) GetPublicMerchantInfo(ctx context.Context, plugin_id stri
 	}, nil
 }
 
-func (r *merchantRepo) GetPluginLink(ctx context.Context, user_id string, merchant_id string) string {
+func (r *merchantRepo) GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) string {
 	selectStatment := `SELECT plugin_id FROM link WHERE user_id='` + user_id + `' AND merchant_id ='` + merchant_id + `'`
 	data, err := r.db.Query(selectStatment)
 	if err != nil {
@@ -75,36 +78,57 @@ func (r *merchantRepo) GetPluginLink(ctx context.Context, user_id string, mercha
 	var plugin_id string
 	data.Next()
 	data.Scan(&plugin_id)
-
-	return "$BASE_HOST" + "/donate/" + plugin_id
+	if strings.ToLower(typeOf) == "iframe" {
+		re := regexp.MustCompile(`\t?\r?\n`)
+		input := `<iframe src='http://localhost:3000/payment-gateway/` + plugin_id + `' style='height: 600px;width: 300px;'></iframe>`
+		input = re.ReplaceAllString(input, "")
+		return input
+	}
+	return "$BASE_HOST" + "/payment-gateway/" + plugin_id
 }
-func (r *merchantRepo) GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, user_id string) string {
-	selectStatment := `SELECT address FROM accounts WHERE user_id='` + user_id + `' AND network ='` + network + `'`
-	data1, err1 := r.db.Query(selectStatment)
+func (r *merchantRepo) GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error) {
+	if plugin_id == "" {
+		return "", errors.New("missing property plugin_id")
+	}
+	selectStatment := `SELECT user_id, merchant_id FROM link WHERE plugin_id='` + plugin_id + `'`
+	data, err := r.db.Query(selectStatment)
+	if err != nil {
+		fmt.Print(err)
+		return "", err
+	}
+	var user_id string
+	var merchant_id string
+	data.Next()
+	data.Scan(&user_id, &merchant_id)
+	fmt.Println(merchant_id, user_id)
+	if user_id == "" {
+		return "", errors.New("plugin_id is invalid")
+	}
+	selectStatment1 := `SELECT address FROM accounts WHERE user_id='` + user_id + `' AND network ='` + network + `' AND merchant_id='` + merchant_id + `'`
+	data1, err1 := r.db.Query(selectStatment1)
 	if err1 != nil {
-		return err1.Error()
+		return "", err1
 	}
 	var taddress string
 	data1.Next()
 	data1.Scan(&taddress)
-	fmt.Println(taddress)
 	if taddress == "" {
-		sqlStatement := `INSERT INTO accounts (user_id, address, private_key, coin, network)
-	VALUES ($1, $2, $3, $4, $5) RETURNING address`
+		sqlStatement := `INSERT INTO accounts (user_id,merchant_id, address, private_key, coin, network)
+	VALUES ($1, $2, $3, $4, $5,$6) RETURNING address`
 		data := s.GenerateNewAddress()
 		addresst := ""
-		err := r.db.QueryRow(sqlStatement, user_id, data.PublicKey, data.PrivateKey, coin, network).Scan(&addresst)
+		err := r.db.QueryRow(sqlStatement, user_id, merchant_id, data.PublicKey, data.PrivateKey, coin, network).Scan(&addresst)
 		if err != nil {
 			panic(err)
 		}
-		return addresst
+		return addresst, nil
 	}
 
-	return taddress
+	return taddress, nil
 }
 
 func (r *merchantRepo) GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error) {
-	data := []byte(merchant_id)
+	data := []byte(merchant_id + user_id + time.Now().GoString())
 	hash := sha256.Sum256(data)
 	plugin_id := fmt.Sprint(hash)
 	md5hash := md5.Sum([]byte(plugin_id))

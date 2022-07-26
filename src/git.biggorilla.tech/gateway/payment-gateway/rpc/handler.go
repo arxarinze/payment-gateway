@@ -37,7 +37,7 @@ func (s *server) GetPublicMerchantInfo(ctx context.Context, in *pb.MerchantPubli
 func (s *server) GetPluginLink(ctx context.Context, in *pb.PluginLinkRequest) (*pb.LinkResponse, error) {
 	auth, _ := metadata.FromIncomingContext(ctx)
 	id := s.identity.GetIdentity(auth)
-	link := s.repo.GetPluginLink(ctx, id, in.GetMerchantId())
+	link := s.repo.GetPluginLink(ctx, id, in.GetMerchantId(), in.GetType())
 	return &pb.LinkResponse{
 		Link: link,
 	}, nil
@@ -75,11 +75,12 @@ func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*p
 }
 
 func (s *server) GenerateDepositAddress(ctx context.Context, in *pb.DepositAddressRequest) (*pb.DepositAddressResponse, error) {
-	auth, _ := metadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
 	switch strings.ToLower(in.Network) {
 	case "ethereum":
-		publicKey := s.repo.GenerateDepositAddress(ctx, s.ethereumClient, in.Network, in.Cryptosymbol, id)
+		publicKey, err := s.repo.GenerateDepositAddress(ctx, s.ethereumClient, in.Network, in.Cryptosymbol, in.PluginId)
+		if err != nil {
+			return &pb.DepositAddressResponse{}, err
+		}
 		return &pb.DepositAddressResponse{
 			Address: publicKey,
 		}, nil

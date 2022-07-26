@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	_ "fmt"
 	_ "log"
 	"strings"
@@ -36,6 +37,10 @@ func (r *middleware) UnaryInterceptor(
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		panic(ok)
+	}
+	fmt.Println(info.FullMethod)
+	if info.FullMethod == "/payment_gateway.v1.PaymentGatewayService/GetPublicMerchantInfo" || info.FullMethod == "/payment_gateway.v1.PaymentGatewayService/GenerateDepositAddress" {
+		return handler(ctx, req)
 	}
 	values := md["authorization"]
 	accessToken := values[0]

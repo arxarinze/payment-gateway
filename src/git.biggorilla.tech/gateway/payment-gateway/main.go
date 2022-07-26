@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	_ "github.com/ethereum/go-ethereum/ethclient"
 	_ "github.com/lib/pq"
 
 	"git.biggorilla.tech/gateway/payment-gateway/database"
@@ -49,6 +50,9 @@ func main() {
 	identity := helpers.NewIdentity(ctx)
 	merchantRepo := repo.NewMerchantRepo(ctx, &db)
 	ethereumClient := services.NewEthereumService(ctx)
+	//client, _ := ethclient.Dial("wss://mainnet.infura.io/ws/v3/5fd8d7c598e4414690cb4f3c49abf585")
+	bala := ethereumClient.GetTokenBalance("0x55FE002aefF02F77364de339a1292923A15844B8", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+	fmt.Println(bala)
 	rpc := pRPC.NewRPCInterface(ctx, identity, merchantRepo, ethereumClient)
 	pb.RegisterPaymentGatewayServiceServer(server, rpc)
 	log.Printf("server listening at %v", listen.Addr())

@@ -67,7 +67,7 @@
         />
       {/if}
       {#if selectedPage == 1}
-        <DepositWidget {data}/>
+        <DepositWidget {data} plugin_id={pluginid}/>
       {/if}
       <Continue
         bind:selectedPage

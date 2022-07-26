@@ -49,6 +49,7 @@ message MerchantRepsonse {
 message DepositAddressRequest {
   string cryptosymbol = 1;
   string network = 2;
+  string plugin_id = 3;
 }
 
 message DepositAddressResponse {
@@ -60,6 +61,7 @@ message GenerateLinkRequest {
 }
 message PluginLinkRequest {
   string merchant_id = 1;
+  optional string type = 2;
 }
 
 message GenericResponse {

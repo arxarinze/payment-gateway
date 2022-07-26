@@ -3,16 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
-	"strings"
-
-	"git.biggorilla.tech/gateway/api-gateway/internal/models"
-	"git.biggorilla.tech/gateway/payment-gateway/pb"
+	"git.biggorilla.tech/gateway/api-gateway/internal/controllers"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 )
 
 func main() {
@@ -25,138 +18,24 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 	}))
+	authController := controllers.NewAuthController(context.Background())
+	merchantController := controllers.NewMerchantController(context.Background(), addr)
+	linkController := controllers.NewLinkController(context.Background(), addr)
+	publicController := controllers.NewPublicController(context.Background(), addr)
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
 	auth := v1.Group("/auth")
 
 	//authentication
-	auth.Post("/login", func(c *fiber.Ctx) error {
-		payload := new(models.LoginRequest)
-		c.BodyParser(&payload)
+	auth.Post("/login", authController.Login)
+	v1.Get("/public/merchant/:plugin_id", publicController.GetMerchantPaymentLink)
 
-		return c.JSON(nil)
-	})
-	v1.Get("/public/merchant/:plugin_id", func(c *fiber.Ctx) error {
-		payload := new(models.MerchantPublicRequest)
-		payload.PluginID = c.Params("plugin_id")
-		conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("did not connect: %v", err)
-		}
-		defer conn.Close()
-		connection := pb.NewPaymentGatewayServiceClient(conn)
-		ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
-		defer cancel()
-		r, err := connection.GetPublicMerchantInfo(ctx, &pb.MerchantPublicRequest{
-			PluginId: payload.PluginID,
-		})
-		if err != nil {
-			log.Printf("Greeting: %s", err)
-		}
-		log.Printf("Greeting: %s", r)
-		return c.JSON(r)
-	})
+	v1.Post("/public/address", publicController.GenerateDepositAddress)
 
-	v1.Post("/generate-deposit-address", func(c *fiber.Ctx) error {
-		payload := new(models.DepositAddressRequest)
-		c.BodyParser(&payload)
-		conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("did not connect: %v", err)
-		}
-		defer conn.Close()
-		connection := pb.NewPaymentGatewayServiceClient(conn)
-		ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
-		defer cancel()
-		r, err := connection.GenerateDepositAddress(ctx, &pb.DepositAddressRequest{
-			Cryptosymbol: payload.Cryptosymbol,
-			Network:      payload.Network,
-		})
-		if err != nil {
-			log.Printf("Greeting: %s", err)
-		}
-		log.Printf("Greeting: %s", r)
-		return c.JSON(r)
-	})
+	v1.Get("/link", linkController.GetLink)
 
-	v1.Get("/link", func(c *fiber.Ctx) error {
-		payload := new(models.GenerateLinkRequest)
-		c.BodyParser(&payload)
-		conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("did not connect: %v", err)
-		}
-		defer conn.Close()
-		connection := pb.NewPaymentGatewayServiceClient(conn)
-		ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
-		defer cancel()
-		r, err := connection.GetPluginLink(ctx, &pb.PluginLinkRequest{MerchantId: payload.MerchantID})
-		if err != nil {
-			if strings.Contains(err.Error(), "duplicate key") {
-				return c.JSON(map[string]string{
-					"Code":    "409",
-					"Message": "Link Already Generated",
-				})
-			}
-			return c.JSON(map[string]string{
-				"Code":    "500",
-				"Message": "An Internal Error Occured",
-			})
-		}
-		return c.JSON(r)
-	})
+	v1.Post("/link", linkController.CreateLink)
 
-	v1.Post("/link", func(c *fiber.Ctx) error {
-		payload := new(models.GenerateLinkRequest)
-		c.BodyParser(&payload)
-		// return fiber.NewError(782, "Custom error message")
-		conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("did not connect: %v", err)
-		}
-		defer conn.Close()
-		connection := pb.NewPaymentGatewayServiceClient(conn)
-		ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
-		defer cancel()
-		r, err := connection.GenerateLink(ctx, &pb.GenerateLinkRequest{MerchantId: payload.MerchantID})
-		if err != nil {
-			if strings.Contains(err.Error(), "duplicate key") {
-				return c.JSON(map[string]string{
-					"Code":    "409",
-					"Message": "Link Already Generated",
-				})
-			}
-			return c.JSON(map[string]string{
-				"Code":    "500",
-				"Message": "An Internal Error Occured",
-			})
-		}
-		return c.JSON(r)
-	})
-
-	v1.Post("/merchant", func(c *fiber.Ctx) error {
-		payload := new(models.MerchantRequest)
-		c.BodyParser(&payload)
-		conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("did not connect: %v", err)
-		}
-		defer conn.Close()
-		connection := pb.NewPaymentGatewayServiceClient(conn)
-		ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
-		defer cancel()
-		r, err := connection.CreateMerchant(ctx, &pb.MerchantRequest{Name: payload.Name, Email: payload.Email})
-		if err != nil {
-			log.Printf("Greeting: %s", err)
-		}
-		log.Printf("Greeting: %s", r)
-		return c.JSON(r)
-		//return c.JSON("Hello, World!")
-	})
+	v1.Post("/merchant", merchantController.CreateMerchant)
 	app.Listen(":5001")
 }

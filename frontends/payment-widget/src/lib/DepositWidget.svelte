@@ -1,4 +1,5 @@
 <script defer lang="ts">
+  export let plugin_id :any;
   export let data: any;
   import QrCode from "qrcode";
   import { loadImage } from "canvas";
@@ -6,12 +7,13 @@
   import { fly } from "svelte/transition";
   import axios from "axios";
   onMount(async () => {
-    console.log(data.coin.symbol.toUpperCase());
+    console.log(plugin_id);
     let address = await axios.post(
-      "http://localhost:5001/api/v1/generate-deposit-address",
+      "http://localhost:5001/api/v1/public/address",
       {
         crypto_symbol: data.coin.symbol,
         network: data.coin.network,
+        plugin_id: plugin_id
       }
     );
     console.log("love1", address.data);
