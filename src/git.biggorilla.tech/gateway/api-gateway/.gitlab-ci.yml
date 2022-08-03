@@ -16,7 +16,7 @@ api-development_deps:
     - go mod tidy
 
 
-## development_deploy:
+# development_deploy:
 #   stage: deploy
 #   tags:
 #     - api-gateway-dev-runner
