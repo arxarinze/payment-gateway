@@ -61,7 +61,7 @@ message GenerateLinkRequest {
 }
 message PluginLinkRequest {
   string merchant_id = 1;
-  optional string type = 2;
+  string type = 2;
 }
 
 message GenericResponse {

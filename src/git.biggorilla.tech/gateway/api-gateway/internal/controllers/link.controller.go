@@ -67,7 +67,7 @@ func (l *linkController) GetLink(c *fiber.Ctx) error {
 	ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
 	defer cancel()
-	r, err := connection.GetPluginLink(ctx, &pb.PluginLinkRequest{MerchantId: payload.MerchantID, Type: &payload.Type})
+	r, err := connection.GetPluginLink(ctx, &pb.PluginLinkRequest{MerchantId: payload.MerchantID, Type: payload.Type})
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			return c.JSON(map[string]string{
