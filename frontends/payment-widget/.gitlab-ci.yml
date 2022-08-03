@@ -13,6 +13,7 @@ development_deploy:
     - cd /var/www/payment-widget
     - rm -f .env
     - echo "VITE_API_CLIENT_KEY=$VITE_API_CLIENT_KEY" >> .env
+    - echo "VITE_API_URL=$VITE_API_URL" >> .env
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
 
