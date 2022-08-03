@@ -5,7 +5,7 @@ development_deploy:
   only:
     - dev
   script:
-    #- pkill -f tmux
+    - pkill -f tmux
     - source ~/.bashrc
     - nvm install v16.16.0
     - npm install --global yarn
