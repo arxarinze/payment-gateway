@@ -5,13 +5,14 @@ development_deploy:
   only:
     - dev
   script:
-    - rm -f .env
     - tmux kill-server&
     - source ~/.bashrc
     - nvm install v16.16.0
     - npm install --global yarn
     - cp -R frontends/payment-widget/* /var/www/payment-widget
     - cd /var/www/payment-widget
+    - rm -f .env
+    - echo $VITE_API_CLIENT_KEY
     - echo "VITE_API_CLIENT_KEY=$VITE_API_CLIENT_KEY" >> .env
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
