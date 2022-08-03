@@ -5,7 +5,7 @@ development_deploy:
   only:
     - dev
   script:
-    - rm .env
+    - rm -f .env
     - tmux kill-server&
     - source ~/.bashrc
     - nvm install v16.16.0
