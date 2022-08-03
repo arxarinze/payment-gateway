@@ -7,8 +7,6 @@ development_deploy:
   script:
     #- pkill -f tmux
     - whoami
-    - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-    - source ~/.bashrc
     - nvm install v14.10.0
     - npm install --global yarn
     - cp -R * /var/www/payment-widget
