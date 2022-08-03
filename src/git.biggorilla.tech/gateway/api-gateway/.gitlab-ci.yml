@@ -1,5 +1,5 @@
 api-development_deps:
-  stage: dependencies
+  stage: build
   tags:
     - api-gateway-dev-runner
   only:
@@ -15,9 +15,9 @@ api-development_deps:
     - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
     - buf generate
     - go mod tidy
+    - rm -rf payment-gateway
     - cd api-gateway
     - tmux new-session -d -s api-gateway 'go run main.go'
-
 
 ## development_deploy:
 #   stage: deploy
