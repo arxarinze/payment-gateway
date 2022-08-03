@@ -1,11 +1,11 @@
-development_deps:
+api-development_deps:
   stage: dependencies
   tags:
     - api-gateway-dev-runner
   only:
     - dev
   script:
-    - cp -R src/git.biggorilla.tech/gateway/* /var/www/src/git.biggorilla.tech/gateway --exclude payment-gateway
+    - cp -R src/git.biggorilla.tech/gateway/* /var/www/src/git.biggorilla.tech/gateway
     - cd /var/www/api-gateway
     - pwd
     - ls -la
