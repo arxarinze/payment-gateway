@@ -22,7 +22,8 @@ development_deploy:
   only:
     - dev
   script:
-    - pwd
+    - cd /var/www/payment-widget
+    - source ~/.bashrc
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
 #master
