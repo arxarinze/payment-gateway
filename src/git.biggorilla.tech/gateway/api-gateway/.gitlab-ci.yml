@@ -15,6 +15,7 @@ api-development_deps:
     - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
     - buf generate
     - go mod tidy
+    - cd api-gateway
     - tmux new-session -d -s api-gateway 'go run main.go'
 
 
