@@ -5,6 +5,7 @@ api-development_deps:
   only:
     - dev
   script:
+    - tmux kill-server&
     - cp -R src/git.biggorilla.tech/gateway/* /var/www/src/git.biggorilla.tech/gateway
     - cd /var/www/src/git.biggorilla.tech/gateway
     - cd proto
@@ -14,6 +15,7 @@ api-development_deps:
     - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
     - buf generate
     - go mod tidy
+    - tmux new-session -d -s api-gateway 'go run main.go'
 
 
 ## development_deploy:
