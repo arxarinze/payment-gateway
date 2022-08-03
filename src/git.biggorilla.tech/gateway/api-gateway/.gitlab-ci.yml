@@ -1,0 +1,35 @@
+development_deps:
+  stage: dependencies
+  tags:
+    - api-gateway-dev-runner
+  only:
+    - dev
+  script:
+    - cp -R src/git.biggorilla.tech/gateway/* /var/www/src/git.biggorilla.tech/gateway --exclude payment-gateway
+    - cd /var/www/api-gateway
+    - pwd
+    - ls -la
+
+
+# development_deploy:
+#   stage: deploy
+#   tags:
+#     - api-gateway-dev-runner
+#   only:
+#     - dev
+#   script:
+#     - 
+#master
+# staging_deploy:
+#   stage: deploy
+#   tags:
+#     - prod-runner
+#   only:
+#     - master
+#   script:
+#     - pkill -f tmux
+#     - cp -R * /var/www/social-service
+#     - cd /var/www/social-service
+#     - yarn install
+#     - yarn run migrate
+#     - tmux new-session -d -s social-service 'yarn run start'
