@@ -6,9 +6,9 @@ api-development_deps:
     - dev
   script:
     - cp -R src/git.biggorilla.tech/gateway/* /var/www/src/git.biggorilla.tech/gateway
-    - cd /var/www/api-gateway
-    - pwd
-    - ls -la
+    - cd /var/www/src/git.biggorilla.tech/gateway
+    - go mod tidy
+    - buf generate
 
 
 ## development_deploy:
