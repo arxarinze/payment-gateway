@@ -22,6 +22,7 @@ development_deploy:
   only:
     - dev
   script:
+    - pwd
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
 #master
