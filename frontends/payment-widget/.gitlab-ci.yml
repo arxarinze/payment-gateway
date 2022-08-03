@@ -1,5 +1,7 @@
 development_deploy:
   stage: deploy
+  variables:
+    VITE_API_CLIENT_KEY: $VITE_API_CLIENT_KEY
   tags:
     - widget-dev-runner
   only:
@@ -12,7 +14,7 @@ development_deploy:
     - cp -R frontends/payment-widget/* /var/www/payment-widget
     - cd /var/www/payment-widget
     - rm -f .env
-    - echo $VITE_API_CLIENT_KEY
+    - echo "$VITE_API_CLIENT_KEY"
     - echo "VITE_API_CLIENT_KEY=$VITE_API_CLIENT_KEY" >> .env
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
