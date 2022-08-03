@@ -9,7 +9,7 @@ development_deploy:
     - source ~/.bashrc
     - nvm install v14.10.0
     - npm install --global yarn
-    - cp -R * /var/www/payment-widget
+    - cp -R frontends/payment-widget/* /var/www/payment-widget
     - cd /var/www/payment-widget
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
