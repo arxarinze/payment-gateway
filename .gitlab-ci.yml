@@ -1,4 +1,6 @@
 stages:
+  - dependencies
+  - build
   - deploy
 
 include:
