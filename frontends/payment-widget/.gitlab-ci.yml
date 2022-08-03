@@ -16,7 +16,7 @@ development_deploy:
     - echo "VITE_API_URL=$VITE_API_URL" >> .env
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
-
+#master
 # staging_deploy:
 #   stage: deploy
 #   tags:
