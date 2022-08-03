@@ -10,13 +10,13 @@ api-development_deps:
     - cd proto
     - buf mod update
     - cd ..
-    - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
-    - go install google.golang.org/protobuf/cmd/protoc-gen-go
+    - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+    - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
     - buf generate
     - go mod tidy
 
 
-## development_deploy:
+# development_deploy:
 #   stage: deploy
 #   tags:
 #     - api-gateway-dev-runner
