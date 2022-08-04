@@ -17,10 +17,11 @@ api-development_deps:
     - go mod tidy
     - cd api-gateway
     - tmux new-session -d -s api-gateway 'go run main.go'
+    - ls
     - cd ../payment-gateway
     - go run main.go
 
-## development_deploy:
+# development_deploy:
 #   stage: deploy
 #   tags:
 #     - api-gateway-dev-runner
