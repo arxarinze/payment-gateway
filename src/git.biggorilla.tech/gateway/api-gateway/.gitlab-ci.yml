@@ -19,7 +19,7 @@ api-development_deps:
     - tmux new-session -d -s api-gateway 'go run main.go'
     - ls
     - cd ../payment-gateway
-    - go run main.go
+    - tmux new-session -d -s api-gateway 'go run main.go'
 
 # development_deploy:
 #   stage: deploy
