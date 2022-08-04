@@ -31,7 +31,7 @@ func (m *merchantController) CreateMerchant(c *fiber.Ctx) error {
 	defer conn.Close()
 	connection := pb.NewPaymentGatewayServiceClient(conn)
 	ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
-	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJ0ZXN0aW5nIiwiaWF0IjoxNTE2MjM5MDIyfQ.-ZWfmCMqmas7sSoU7y8zWwunWUYL7IGShgRw1ykf-84")
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+c.Locals("token").(string))
 	defer cancel()
 	r, err := connection.CreateMerchant(ctx, &pb.MerchantRequest{Name: payload.Name, Email: payload.Email})
 	if err != nil {

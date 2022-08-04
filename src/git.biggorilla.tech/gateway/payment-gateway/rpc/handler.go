@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"git.biggorilla.tech/gateway/payment-gateway/helpers"
@@ -10,7 +9,6 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
 	services "git.biggorilla.tech/gateway/payment-gateway/services/web3"
-	"google.golang.org/grpc/metadata"
 )
 
 type server struct {
@@ -37,9 +35,7 @@ func (s *server) GetPublicMerchantInfo(ctx context.Context, in *pb.MerchantPubli
 
 func (s *server) GetPluginLink(ctx context.Context, in *pb.PluginLinkRequest) (*pb.LinkResponse, error) {
 	//auth, _ := metadata.FromIncomingContext(ctx)
-	fmt.Println(ctx.Value("user").(map[string]interface{}))
-	identity := ctx.Value("user").(map[string]interface{})["data"].(map[string]interface{})["id"]
-	id := fmt.Sprintf("%v", identity)
+	id := s.identity.GetIdentity(ctx)
 	link, err := s.repo.GetPluginLink(ctx, id, in.GetMerchantId(), in.GetType())
 	if err != nil {
 		return nil, err
@@ -50,8 +46,8 @@ func (s *server) GetPluginLink(ctx context.Context, in *pb.PluginLinkRequest) (*
 }
 
 func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.LinkResponse, error) {
-	auth, _ := metadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
+
+	id := s.identity.GetIdentity(ctx)
 	data, err1 := s.repo.GenerateLink(ctx, in.GetMerchantId(), id)
 	if err1 != nil {
 		return &pb.LinkResponse{
@@ -64,8 +60,8 @@ func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (
 	}, err1
 }
 func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.GenericResponse, error) {
-	auth, _ := metadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
+	// auth, _ := metadata.FromIncomingContext(ctx)
+	id := s.identity.GetIdentity(ctx)
 	data, err1 := s.repo.CreateMerchant(ctx, in.GetName(), in.GetEmail(), id)
 	if err1 != nil {
 		a := data.(*model.GenericResponse)
