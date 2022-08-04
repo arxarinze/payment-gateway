@@ -37,6 +37,9 @@ func main() {
 		Filter: func(ctx *fiber.Ctx) bool {
 			headers := ctx.GetReqHeaders()
 			split := strings.Split(headers["Authorization"], " ")
+			if len(split) <= 1 {
+				return false
+			}
 			token := split[1]
 			client := http.Client{}
 			req, err := http.NewRequest("GET", "http://ec2-52-72-83-242.compute-1.amazonaws.com/global/verify-sso", nil)
