@@ -14,7 +14,7 @@ import (
 
 	"git.biggorilla.tech/gateway/payment-gateway/model"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
-	"git.biggorilla.tech/gateway/payment-gateway/services/web3"
+	services "git.biggorilla.tech/gateway/payment-gateway/services/web3"
 	_ "github.com/lib/pq"
 )
 
@@ -22,7 +22,7 @@ type MerchantRepo interface {
 	CreateMerchant(ctx context.Context, name string, email string, user_id string) (interface{}, error)
 	GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error)
 	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error)
-	GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) string
+	GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) (string, error)
 	GetPublicMerchantInfo(ctx context.Context, plugin_id string) (*pb.MerchantPublicResponse, error)
 }
 
@@ -69,22 +69,25 @@ func (r *merchantRepo) GetPublicMerchantInfo(ctx context.Context, plugin_id stri
 	}, nil
 }
 
-func (r *merchantRepo) GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) string {
+func (r *merchantRepo) GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) (string, error) {
 	selectStatment := `SELECT plugin_id FROM link WHERE user_id='` + user_id + `' AND merchant_id ='` + merchant_id + `'`
 	data, err := r.db.Query(selectStatment)
 	if err != nil {
-		return err.Error()
+		return "", err
 	}
 	var plugin_id string
 	data.Next()
 	data.Scan(&plugin_id)
+	if plugin_id == "" {
+		return "", errors.New("error")
+	}
 	if strings.ToLower(typeOf) == "iframe" {
 		re := regexp.MustCompile(`\t?\r?\n`)
 		input := `<iframe src='http://localhost:3000/payment-gateway/` + plugin_id + `' style='height: 600px;width: 300px;'></iframe>`
 		input = re.ReplaceAllString(input, "")
-		return input
+		return input, nil
 	}
-	return "$BASE_HOST" + "/payment-gateway/" + plugin_id
+	return "$BASE_HOST" + "/payment-gateway/" + plugin_id, nil
 }
 func (r *merchantRepo) GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error) {
 	if plugin_id == "" {

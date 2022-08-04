@@ -17,6 +17,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
@@ -33,7 +34,8 @@ require (
 )
 
 require (
-	github.com/gofiber/fiber/v2 v2.35.0
+	github.com/gofiber/fiber/v2 v2.36.0
+	github.com/gofiber/jwt/v3 v3.2.14
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/lib/pq v1.10.6

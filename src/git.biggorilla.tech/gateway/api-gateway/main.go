@@ -55,10 +55,12 @@ func main() {
 			}
 			var data map[string]interface{}
 			json.NewDecoder(res.Body).Decode(&data)
+			fmt.Println(data)
 			if data["status"] == false {
 				return false
 			}
 			ctx.Locals("user", data)
+			ctx.Locals("token", token)
 			return true
 		},
 		SuccessHandler: func(*fiber.Ctx) error {

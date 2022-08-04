@@ -2,13 +2,14 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"git.biggorilla.tech/gateway/payment-gateway/helpers"
 	"git.biggorilla.tech/gateway/payment-gateway/model"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
-	"git.biggorilla.tech/gateway/payment-gateway/services/web3"
+	services "git.biggorilla.tech/gateway/payment-gateway/services/web3"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -35,9 +36,14 @@ func (s *server) GetPublicMerchantInfo(ctx context.Context, in *pb.MerchantPubli
 }
 
 func (s *server) GetPluginLink(ctx context.Context, in *pb.PluginLinkRequest) (*pb.LinkResponse, error) {
-	auth, _ := metadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
-	link := s.repo.GetPluginLink(ctx, id, in.GetMerchantId(), in.GetType())
+	//auth, _ := metadata.FromIncomingContext(ctx)
+	fmt.Println(ctx.Value("user").(map[string]interface{}))
+	identity := ctx.Value("user").(map[string]interface{})["data"].(map[string]interface{})["id"]
+	id := fmt.Sprintf("%v", identity)
+	link, err := s.repo.GetPluginLink(ctx, id, in.GetMerchantId(), in.GetType())
+	if err != nil {
+		return nil, err
+	}
 	return &pb.LinkResponse{
 		Link: link,
 	}, nil
