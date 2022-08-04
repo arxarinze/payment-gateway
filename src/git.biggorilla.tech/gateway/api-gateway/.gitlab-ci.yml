@@ -17,6 +17,8 @@ api-development_deps:
     - go mod tidy
     - cd api-gateway
     - tmux new-session -d -s api-gateway 'go run main.go'
+    - cd ../payment-gateway
+    - go run main.go
 
 ## development_deploy:
 #   stage: deploy
