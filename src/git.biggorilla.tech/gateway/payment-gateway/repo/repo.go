@@ -20,6 +20,7 @@ import (
 
 type MerchantRepo interface {
 	CreateMerchant(ctx context.Context, name string, email string, user_id string) (interface{}, error)
+	GetMerchants(ctx context.Context, user_id string) (interface{}, error)
 	GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error)
 	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error)
 	GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) (string, error)
@@ -29,6 +30,14 @@ type MerchantRepo interface {
 type merchantRepo struct {
 	db  *sql.DB
 	ctx context.Context
+}
+
+// GetMerchants implements MerchantRepo
+func (m *merchantRepo) GetMerchants(ctx context.Context, user_id string) (interface{}, error) {
+	selectStatment := `SELECT merchant_id FROM link WHERE user_id='` + user_id + `'`
+
+	fmt.Println(selectStatment)
+	return "", nil
 }
 
 func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {

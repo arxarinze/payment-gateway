@@ -9,12 +9,18 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
 	services "git.biggorilla.tech/gateway/payment-gateway/services/web3"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 type server struct {
 	identity       helpers.Identity
 	repo           repo.MerchantRepo
 	ethereumClient services.EthereumService
+}
+
+// GetMerchant implements pb.PaymentGatewayServiceServer
+func (s *server) GetMerchants(ctx context.Context, in *emptypb.Empty) (*pb.MerchantResponse, error) {
+	return &pb.MerchantResponse{}, nil
 }
 
 func NewRPCInterface(ctx context.Context, identity helpers.Identity, repo repo.MerchantRepo, ethereumClient services.EthereumService) pb.PaymentGatewayServiceServer {

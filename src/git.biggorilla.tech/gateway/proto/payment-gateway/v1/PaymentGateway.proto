@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package payment_gateway.v1;
 
+import "google/protobuf/empty.proto";
 import "options/annotations.proto";
 
 option go_package = "./payment-gateway/pb";
@@ -11,6 +12,7 @@ option (transformer.go_repo_package) = "model";
 
 service PaymentGatewayService {
   rpc CreateMerchant(MerchantRequest) returns (GenericResponse) {}
+  rpc GetMerchants(google.protobuf.Empty) returns (MerchantResponse) {}
   rpc GenerateLink(GenerateLinkRequest) returns (LinkResponse) {}
   rpc GetPluginLink(PluginLinkRequest) returns (LinkResponse) {}
   rpc GenerateDepositAddress(DepositAddressRequest) returns (DepositAddressResponse) {}
@@ -38,7 +40,7 @@ message MerchantPublicRequest {
 message LinkResponse {
   string link = 1;
 }
-message MerchantRepsonse {
+message MerchantResponse {
   option (transformer.go_struct) = "Merchant";
   int64 id = 1 [(transformer.map_to) = "ID"];
   string name = 2 [(transformer.map_to) = "Name"];
