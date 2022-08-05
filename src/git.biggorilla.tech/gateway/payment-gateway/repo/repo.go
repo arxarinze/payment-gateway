@@ -32,14 +32,6 @@ type merchantRepo struct {
 	ctx context.Context
 }
 
-// GetMerchants implements MerchantRepo
-func (m *merchantRepo) GetMerchants(ctx context.Context, user_id string) (interface{}, error) {
-	selectStatment := `SELECT merchant_id FROM link WHERE user_id='` + user_id + `'`
-
-	fmt.Println(selectStatment)
-	return "", nil
-}
-
 func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {
 	err := db.Ping()
 	if err != nil {
@@ -51,6 +43,16 @@ func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {
 	}
 }
 
+// GetMerchants implements MerchantRepo
+func (m *merchantRepo) GetMerchants(ctx context.Context, user_id string) (interface{}, error) {
+	selectStatment := `SELECT name, email, user_id, avatar, address FROM merchants WHERE user_id='` + user_id + `'`
+	data, err := m.db.Query(selectStatment)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(data)
+	return "", nil
+}
 func (r *merchantRepo) GetPublicMerchantInfo(ctx context.Context, plugin_id string) (*pb.MerchantPublicResponse, error) {
 	selectStatment := `SELECT merchant_id FROM link WHERE plugin_id='` + plugin_id + `'`
 	data, err := r.db.Query(selectStatment)
