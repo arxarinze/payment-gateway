@@ -7,6 +7,7 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/helpers"
 	"git.biggorilla.tech/gateway/payment-gateway/model"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
+	"git.biggorilla.tech/gateway/payment-gateway/pb/transform"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
 	services "git.biggorilla.tech/gateway/payment-gateway/services/web3"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -20,7 +21,14 @@ type server struct {
 
 // GetMerchant implements pb.PaymentGatewayServiceServer
 func (s *server) GetMerchants(ctx context.Context, in *emptypb.Empty) (*pb.MerchantResponse, error) {
-	return &pb.MerchantResponse{}, nil
+	id := s.identity.GetIdentity(ctx)
+	data, err := s.repo.GetMerchants(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.MerchantResponse{
+		Data: transform.MerchantToPbList(*data),
+	}, nil
 }
 
 func NewRPCInterface(ctx context.Context, identity helpers.Identity, repo repo.MerchantRepo, ethereumClient services.EthereumService) pb.PaymentGatewayServiceServer {
@@ -68,7 +76,7 @@ func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (
 func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.GenericResponse, error) {
 	// auth, _ := metadata.FromIncomingContext(ctx)
 	id := s.identity.GetIdentity(ctx)
-	data, err1 := s.repo.CreateMerchant(ctx, in.GetName(), in.GetEmail(), id)
+	data, err1 := s.repo.CreateMerchant(ctx, in.GetName(), in.GetEmail(), in.GetAddress(), in.GetAvatar(), id)
 	if err1 != nil {
 		a := data.(*model.GenericResponse)
 		return &pb.GenericResponse{

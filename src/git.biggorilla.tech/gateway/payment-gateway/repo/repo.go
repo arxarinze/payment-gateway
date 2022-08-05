@@ -19,8 +19,9 @@ import (
 )
 
 type MerchantRepo interface {
-	CreateMerchant(ctx context.Context, name string, email string, user_id string) (interface{}, error)
-	GetMerchants(ctx context.Context, user_id string) (interface{}, error)
+	CreateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error)
+	UpdateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error)
+	GetMerchants(ctx context.Context, user_id string) (*[]model.Merchant, error)
 	GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error)
 	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error)
 	GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) (string, error)
@@ -30,6 +31,11 @@ type MerchantRepo interface {
 type merchantRepo struct {
 	db  *sql.DB
 	ctx context.Context
+}
+
+// UpdateMerchant implements MerchantRepo
+func (m *merchantRepo) UpdateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error) {
+	panic("unimplemented")
 }
 
 func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {
@@ -44,14 +50,31 @@ func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {
 }
 
 // GetMerchants implements MerchantRepo
-func (m *merchantRepo) GetMerchants(ctx context.Context, user_id string) (interface{}, error) {
-	selectStatment := `SELECT name, email, user_id, avatar, address FROM merchants WHERE user_id='` + user_id + `'`
+func (m *merchantRepo) GetMerchants(ctx context.Context, user_id string) (*[]model.Merchant, error) {
+	result := []model.Merchant{}
+	selectStatment := `SELECT id, name, email, user_id, avatar, address FROM merchants WHERE user_id='` + user_id + `'`
 	data, err := m.db.Query(selectStatment)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(data)
-	return "", nil
+	defer data.Close()
+	for data.Next() {
+		dataSet := model.Merchant{
+			ID:      0,
+			Name:    "",
+			Email:   "",
+			UserID:  user_id,
+			Avatar:  "",
+			Address: "",
+		}
+		err = data.Scan(&dataSet.ID, &dataSet.Name, &dataSet.Email, &dataSet.UserID, &dataSet.Avatar, &dataSet.Address)
+		if err != nil {
+			// handle this error
+			panic(err)
+		}
+		result = append(result, dataSet)
+	}
+	return &result, nil
 }
 func (r *merchantRepo) GetPublicMerchantInfo(ctx context.Context, plugin_id string) (*pb.MerchantPublicResponse, error) {
 	selectStatment := `SELECT merchant_id FROM link WHERE plugin_id='` + plugin_id + `'`
@@ -59,6 +82,7 @@ func (r *merchantRepo) GetPublicMerchantInfo(ctx context.Context, plugin_id stri
 	if err != nil {
 		return nil, err
 	}
+	defer data.Close()
 	var merchant_id string
 	data.Next()
 	data.Scan(&merchant_id)
@@ -86,6 +110,7 @@ func (r *merchantRepo) GetPluginLink(ctx context.Context, user_id string, mercha
 	if err != nil {
 		return "", err
 	}
+	defer data.Close()
 	var plugin_id string
 	data.Next()
 	data.Scan(&plugin_id)
@@ -110,6 +135,7 @@ func (r *merchantRepo) GenerateDepositAddress(ctx context.Context, s services.Et
 		fmt.Print(err)
 		return "", err
 	}
+	defer data.Close()
 	var user_id string
 	var merchant_id string
 	data.Next()
@@ -174,15 +200,17 @@ func (r *merchantRepo) GenerateLink(ctx context.Context, merchant_id string, use
 	}, nil
 }
 
-func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email string, user_id string) (interface{}, error) {
+func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error) {
 
-	sqlStatement := `INSERT INTO merchants (name, email, user_id) 
-	VALUES ($1, $2, $3) RETURNING id, name, email, user_id`
+	sqlStatement := `INSERT INTO merchants (name, email, user_id, address, avatar) 
+	VALUES ($1, $2, $3, $4,$5) RETURNING id, name, email, user_id, address, avatar`
 	idt := 0
 	emailt := ""
 	namet := ""
 	user_idt := ""
-	err := r.db.QueryRow(sqlStatement, name, email, user_id).Scan(&idt, &namet, &emailt, &user_idt)
+	addresst := ""
+	avatart := ""
+	err := r.db.QueryRow(sqlStatement, name, email, user_id, address, avatar).Scan(&idt, &namet, &emailt, &user_idt, &addresst, &avatart)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			return &model.GenericResponse{
@@ -196,9 +224,11 @@ func (r *merchantRepo) CreateMerchant(ctx context.Context, name string, email st
 		}, err
 	}
 	return &model.Merchant{
-		Name:   namet,
-		ID:     int64(idt),
-		Email:  emailt,
-		UserID: user_id,
+		Name:    namet,
+		ID:      int64(idt),
+		Email:   emailt,
+		UserID:  user_id,
+		Avatar:  avatart,
+		Address: addresst,
 	}, nil
 }

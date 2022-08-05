@@ -37,7 +37,7 @@ func (m *merchantController) GetMerchants(c *fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Greeting: %s", err)
 	}
-	log.Printf("Greeting: %s", r)
+
 	return c.JSON(r)
 }
 
@@ -54,7 +54,7 @@ func (m *merchantController) CreateMerchant(c *fiber.Ctx) error {
 	ctx, cancel := context.WithCancel(context.Background()) //.WithTimeout(context.Background(), time.Minute)
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+c.Locals("token").(string))
 	defer cancel()
-	r, err := connection.CreateMerchant(ctx, &pb.MerchantRequest{Name: payload.Name, Email: payload.Email})
+	r, err := connection.CreateMerchant(ctx, &pb.MerchantRequest{Name: payload.Name, Email: payload.Email, Address: payload.Address, Avatar: payload.Avatar})
 	if err != nil {
 		log.Printf("Greeting: %s", err)
 	}

@@ -87,5 +87,6 @@ func main() {
 	v1.Post("/link", linkController.CreateLink)
 
 	v1.Post("/merchant", merchantController.CreateMerchant)
+	v1.Get("/merchant", merchantController.GetMerchants)
 	app.Listen(":5001")
 }

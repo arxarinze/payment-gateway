@@ -6,7 +6,7 @@ import "google/protobuf/empty.proto";
 import "options/annotations.proto";
 
 option go_package = "./payment-gateway/pb";
-option (transformer.go_models_file_path) = "src/git.biggorilla.tech/gateway/payment-gateway/model/model.go";
+option (transformer.go_models_file_path) = "payment-gateway/model/model.go";
 option (transformer.go_protobuf_package) = "pb";
 option (transformer.go_repo_package) = "model";
 
@@ -22,6 +22,8 @@ service PaymentGatewayService {
 message MerchantRequest {
   string name = 1;
   string email = 2;
+  string address = 3;
+  string avatar = 4;
 }
 
 message MerchantPublicResponse {
@@ -40,12 +42,18 @@ message MerchantPublicRequest {
 message LinkResponse {
   string link = 1;
 }
-message MerchantResponse {
+message MerchantData {
   option (transformer.go_struct) = "Merchant";
   int64 id = 1 [(transformer.map_to) = "ID"];
   string name = 2 [(transformer.map_to) = "Name"];
   string email = 3 [(transformer.map_to) = "Email"];
   string user_id = 4 [(transformer.map_to) = "UserID"];
+  string avatar = 5 [(transformer.map_to) = "Avatar"];
+  string address = 6 [(transformer.map_to) = "Address"];
+}
+
+message MerchantResponse {
+  repeated MerchantData data = 1;
 }
 
 message DepositAddressRequest {
