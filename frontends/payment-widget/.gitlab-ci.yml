@@ -27,7 +27,7 @@ development_deploy:
     - yarn install
     - tmux new-session -d -s payment-widget 'yarn run dev'
 #master
-# staging_deploy:
+## staging_deploy:
 #   stage: deploy
 #   tags:
 #     - prod-runner
