@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"git.biggorilla.tech/gateway/payment-gateway/helpers"
@@ -17,6 +18,21 @@ type server struct {
 	identity       helpers.Identity
 	repo           repo.MerchantRepo
 	ethereumClient services.EthereumService
+}
+
+// UpdateMerchant implements pb.PaymentGatewayServiceServer
+func (s *server) UpdateMerchant(ctx context.Context, in *pb.MerchantUpdateRequest) (*pb.GenericResponse, error) {
+	id := s.identity.GetIdentity(ctx)
+	data, err := s.repo.UpdateMerchant(ctx, in.GetName(), in.GetEmail(), in.GetAddress(), in.GetAvatar(), id, in.GetMerchantId())
+	if err != nil {
+		return nil, err
+	}
+	count := data.(int64)
+	stringCount := strconv.Itoa(int(count))
+	return &pb.GenericResponse{
+		Code:    200,
+		Message: "Updated " + stringCount + " Records",
+	}, nil
 }
 
 // GetMerchant implements pb.PaymentGatewayServiceServer

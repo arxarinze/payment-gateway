@@ -6,6 +6,13 @@ type MerchantRequest struct {
 	Address string `json:"address"`
 	Avatar  string `json:"avatar"`
 }
+type MerchantUpdateRequest struct {
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	Address    string `json:"address"`
+	Avatar     string `json:"avatar"`
+	MerchantID int64  `json:"merchant_id"`
+}
 
 type MerchantPublicRequest struct {
 	PluginID string `json:"plugin_id"`

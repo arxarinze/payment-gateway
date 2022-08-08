@@ -20,7 +20,7 @@ import (
 
 type MerchantRepo interface {
 	CreateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error)
-	UpdateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error)
+	UpdateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string, merchant_id int64) (interface{}, error)
 	GetMerchants(ctx context.Context, user_id string) (*[]model.Merchant, error)
 	GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error)
 	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error)
@@ -34,8 +34,17 @@ type merchantRepo struct {
 }
 
 // UpdateMerchant implements MerchantRepo
-func (m *merchantRepo) UpdateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error) {
-	panic("unimplemented")
+func (m *merchantRepo) UpdateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string, merchant_id int64) (interface{}, error) {
+	sqlStatement := `UPDATE merchants SET name = $2, email = $3, address=$4, avatar=$5 WHERE user_id = $1 AND id=$6;`
+	res, err := m.db.Exec(sqlStatement, user_id, name, email, address, avatar, merchant_id)
+	if err != nil {
+		panic(err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		panic(err)
+	}
+	return count, nil
 }
 
 func NewMerchantRepo(ctx context.Context, db *sql.DB) MerchantRepo {

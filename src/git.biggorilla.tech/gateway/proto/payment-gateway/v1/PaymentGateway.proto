@@ -12,6 +12,7 @@ option (transformer.go_repo_package) = "model";
 
 service PaymentGatewayService {
   rpc CreateMerchant(MerchantRequest) returns (GenericResponse) {}
+  rpc UpdateMerchant(MerchantUpdateRequest) returns (GenericResponse) {}
   rpc GetMerchants(google.protobuf.Empty) returns (MerchantResponse) {}
   rpc GenerateLink(GenerateLinkRequest) returns (LinkResponse) {}
   rpc GetPluginLink(PluginLinkRequest) returns (LinkResponse) {}
@@ -24,6 +25,14 @@ message MerchantRequest {
   string email = 2;
   string address = 3;
   string avatar = 4;
+}
+
+message MerchantUpdateRequest {
+  string name = 1;
+  string email = 2;
+  string address = 3;
+  string avatar = 4;
+  int64 merchant_id = 5;
 }
 
 message MerchantPublicResponse {

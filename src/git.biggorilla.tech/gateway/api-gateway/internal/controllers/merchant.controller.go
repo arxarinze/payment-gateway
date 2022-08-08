@@ -16,10 +16,33 @@ import (
 type MerchantController interface {
 	CreateMerchant(c *fiber.Ctx) error
 	GetMerchants(c *fiber.Ctx) error
+	UpdateMerchant(c *fiber.Ctx) error
 }
 
 type merchantController struct {
 	address *string
+}
+
+// UpdateMerchant implements MerchantController
+func (m *merchantController) UpdateMerchant(c *fiber.Ctx) error {
+	payload := new(models.MerchantUpdateRequest)
+	c.BodyParser(&payload)
+	conn, err := grpc.Dial(*m.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	connection := pb.NewPaymentGatewayServiceClient(conn)
+	ctx, cancel := context.WithCancel(context.Background())
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+c.Locals("token").(string))
+	defer cancel()
+	//TODO: Change this to a transformer utilization
+	r, err := connection.UpdateMerchant(ctx, &pb.MerchantUpdateRequest{Name: payload.Name, Address: payload.Address, Email: payload.Email, Avatar: payload.Avatar, MerchantId: payload.MerchantID})
+	if err != nil {
+		log.Printf("Greeting: %s", err)
+	}
+
+	return c.JSON(r)
 }
 
 // GetMerchant implements MerchantController
