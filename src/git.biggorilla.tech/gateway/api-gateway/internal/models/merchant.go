@@ -19,7 +19,7 @@ type MerchantPublicRequest struct {
 }
 
 type GenerateLinkRequest struct {
-	MerchantID string `json:"merchant_id"`
+	MerchantID int64 `json:"merchant_id"`
 }
 type GetLinkRequest struct {
 	MerchantID string `json:"merchant_id"`

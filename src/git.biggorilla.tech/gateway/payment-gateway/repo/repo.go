@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,7 +23,7 @@ type MerchantRepo interface {
 	CreateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string) (interface{}, error)
 	UpdateMerchant(ctx context.Context, name string, email string, address string, avatar string, user_id string, merchant_id int64) (interface{}, error)
 	GetMerchants(ctx context.Context, user_id string) (*[]model.Merchant, error)
-	GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error)
+	GenerateLink(ctx context.Context, merchant_id int64, user_id string) (interface{}, error)
 	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error)
 	GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) (string, error)
 	GetPublicMerchantInfo(ctx context.Context, plugin_id string) (*pb.MerchantPublicResponse, error)
@@ -176,8 +177,23 @@ func (r *merchantRepo) GenerateDepositAddress(ctx context.Context, s services.Et
 	return taddress, nil
 }
 
-func (r *merchantRepo) GenerateLink(ctx context.Context, merchant_id string, user_id string) (interface{}, error) {
-	data := []byte(merchant_id + user_id + time.Now().GoString())
+func (r *merchantRepo) GenerateLink(ctx context.Context, merchant_id int64, user_id string) (interface{}, error) {
+	fmt.Println(merchant_id, user_id)
+	selectStatment := `SELECT id FROM merchants WHERE user_id='` + user_id + `' AND id=` + strconv.Itoa(int(merchant_id))
+	dta, err0 := r.db.Query(selectStatment)
+	if err0 != nil {
+		fmt.Print(err0)
+		return "", err0
+	}
+	fmt.Println(dta)
+	defer dta.Close()
+	var idtemp string
+	dta.Next()
+	dta.Scan(&idtemp)
+	if idtemp == "" {
+		return nil, errors.New("Forbidden")
+	}
+	data := []byte(strconv.Itoa(int(merchant_id)) + user_id + time.Now().GoString())
 	hash := sha256.Sum256(data)
 	plugin_id := fmt.Sprint(hash)
 	md5hash := md5.Sum([]byte(plugin_id))
@@ -190,6 +206,7 @@ func (r *merchantRepo) GenerateLink(ctx context.Context, merchant_id string, use
 	merchant_idt := ""
 	err := r.db.QueryRow(sqlStatement, plugin_id, user_id, merchant_id).Scan(&idt, &plugin_idt, &user_idt, &merchant_idt)
 	if err != nil {
+		fmt.Println(err)
 		if strings.Contains(err.Error(), "duplicate key") {
 			return &model.GenericResponse{
 				Code:    409,

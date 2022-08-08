@@ -27,6 +27,7 @@ type linkController struct {
 func (l *linkController) CreateLink(c *fiber.Ctx) error {
 	payload := new(models.GenerateLinkRequest)
 	c.BodyParser(&payload)
+	fmt.Println(payload)
 	// return fiber.NewError(782, "Custom error message")
 	conn, err := grpc.Dial(*l.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

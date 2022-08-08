@@ -76,7 +76,7 @@ message DepositAddressResponse {
 }
 
 message GenerateLinkRequest {
-  string merchant_id = 1;
+  int64 merchant_id = 1;
 }
 message PluginLinkRequest {
   string merchant_id = 1;

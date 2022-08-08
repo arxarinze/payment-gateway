@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"strings"
 
-	"git.biggorilla.tech/gateway/payment-gateway/tokens"
+	tether "git.biggorilla.tech/gateway/payment-gateway/tokens"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,9 +17,9 @@ import (
 )
 
 func main() {
-	client, _ := ethclient.Dial("wss://mainnet.infura.io/ws/v3/5fd8d7c598e4414690cb4f3c49abf585")
+	client, _ := ethclient.Dial("wss://ropsten.infura.io/ws/v3/5fd8d7c598e4414690cb4f3c49abf585")
 
-	contractAddress := common.HexToAddress("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+	contractAddress := common.HexToAddress("0xB404c51BBC10dcBE948077F18a4B8E553D160084")
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Default().Panicln(err)
@@ -47,15 +47,17 @@ func main() {
 		case err := <-sub.Err():
 			log.Default().Panicln(err)
 		case vLog := <-logs:
-			fmt.Println("\n", vLog.TxHash.Hex())
 			if vLog.Topics[0].Hex() == logTransferSigHash.Hex() {
 				data, err := contractAbi.Unpack("Transfer", vLog.Data)
 				if err != nil {
 					log.Default().Panicln(err)
 				}
+				//if common.HexToAddress(vLog.Topics[2].String()).String() == "0x34f53290A60B42DD9D80ECC6b46aB5F4C320144C" {
+				fmt.Println("\n", vLog.TxHash.Hex())
 				fmt.Println("value", data)
 				fmt.Println("from", common.HexToAddress(vLog.Topics[1].String()).String())
 				fmt.Println("to", common.HexToAddress(vLog.Topics[2].String()).String())
+				//}
 			}
 		}
 	}
