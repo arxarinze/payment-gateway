@@ -24,6 +24,8 @@ api-development_deps:
     - ls
     - cd ../payment-gateway
     - tmux new-session -d -s payment-gateway 'go run main.go'
+    - cd ../webhook
+    - tmux new-session -d -s webhook 'go run main.go'
 
 ##development_deploy:
 #   stage: deploy
