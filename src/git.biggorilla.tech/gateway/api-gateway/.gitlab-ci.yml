@@ -27,7 +27,7 @@ api-development_deps:
     - cd ../webhook
     - tmux new-session -d -s webhook 'go run main.go'
 
-##development_deploy:
+#development_deploy:
 #   stage: deploy
 #   tags:
 #     - api-gateway-dev-runner
