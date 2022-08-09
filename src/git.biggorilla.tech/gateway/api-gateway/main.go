@@ -26,6 +26,7 @@ func main() {
 	}))
 	authController := controllers.NewAuthController(context.Background())
 	publicController := controllers.NewPublicController(context.Background(), addr)
+	transactionController := controllers.NewTransactionController(context.Background(), addr)
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
 	auth := v1.Group("/auth")
@@ -89,5 +90,6 @@ func main() {
 	v1.Post("/merchant", merchantController.CreateMerchant)
 	v1.Get("/merchant", merchantController.GetMerchants)
 	v1.Patch("/merchant", merchantController.UpdateMerchant)
+	v1.Get("/transactions", transactionController.GetTransactions)
 	app.Listen(":5001")
 }

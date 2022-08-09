@@ -27,11 +27,38 @@ type MerchantRepo interface {
 	GenerateDepositAddress(ctx context.Context, s services.EthereumService, network string, coin string, plugin_id string) (string, error)
 	GetPluginLink(ctx context.Context, user_id string, merchant_id string, typeOf string) (string, error)
 	GetPublicMerchantInfo(ctx context.Context, plugin_id string) (*pb.MerchantPublicResponse, error)
+	GetTransactions(ctx context.Context, merchant_id string, user_id string) (*[]model.Transaction, error)
 }
 
 type merchantRepo struct {
 	db  *sql.DB
 	ctx context.Context
+}
+
+// GetTransactions implements MerchantRepo
+func (m *merchantRepo) GetTransactions(ctx context.Context, merchant_id string, user_id string) (*[]model.Transaction, error) {
+	result := []model.Transaction{}
+	selectStatment := `SELECT tx_hash, sender, reciever, value FROM transactions WHERE user_id='` + user_id + `' AND merchant_id='` + merchant_id + `'`
+	data, err := m.db.Query(selectStatment)
+	if err != nil {
+		return nil, err
+	}
+	defer data.Close()
+	for data.Next() {
+		dataSet := model.Transaction{
+			TxHash: "",
+			From:   "",
+			To:     "",
+			Value:  "",
+		}
+		err = data.Scan(&dataSet.TxHash, &dataSet.From, &dataSet.To, &dataSet.Value)
+		if err != nil {
+			// handle this error
+			panic(err)
+		}
+		result = append(result, dataSet)
+	}
+	return &result, nil
 }
 
 // UpdateMerchant implements MerchantRepo

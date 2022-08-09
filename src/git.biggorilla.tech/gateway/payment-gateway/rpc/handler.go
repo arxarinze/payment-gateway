@@ -20,6 +20,18 @@ type server struct {
 	ethereumClient services.EthereumService
 }
 
+// GetTransactions implements pb.PaymentGatewayServiceServer
+func (s *server) GetTransactions(ctx context.Context, in *pb.TransactionRequest) (*pb.Transactions, error) {
+	id := s.identity.GetIdentity(ctx)
+	data, err := s.repo.GetTransactions(ctx, in.GetMerchantId(), id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Transactions{
+		Data: transform.TransactionToPbList(*data),
+	}, nil
+}
+
 // UpdateMerchant implements pb.PaymentGatewayServiceServer
 func (s *server) UpdateMerchant(ctx context.Context, in *pb.MerchantUpdateRequest) (*pb.GenericResponse, error) {
 	id := s.identity.GetIdentity(ctx)

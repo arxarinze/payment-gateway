@@ -16,6 +16,7 @@ service PaymentGatewayService {
   rpc GetMerchants(google.protobuf.Empty) returns (MerchantResponse) {}
   rpc GenerateLink(GenerateLinkRequest) returns (LinkResponse) {}
   rpc GetPluginLink(PluginLinkRequest) returns (LinkResponse) {}
+  rpc GetTransactions(TransactionRequest) returns (Transactions) {}
   rpc GenerateDepositAddress(DepositAddressRequest) returns (DepositAddressResponse) {}
   rpc GetPublicMerchantInfo(MerchantPublicRequest) returns (MerchantPublicResponse) {}
 }
@@ -61,6 +62,20 @@ message MerchantData {
   string address = 6 [(transformer.map_to) = "Address"];
 }
 
+message TransactionRequest {
+  string merchant_id = 1;
+}
+
+message TransactionResponse {
+  option (transformer.go_struct) = "Transaction";
+  string tx_hash = 1 [(transformer.map_to) = "TxHash"];
+  string sender = 2 [(transformer.map_to) = "From"];
+  string reciever = 3 [(transformer.map_to) = "To"];
+  string value = 4 [(transformer.map_to) = "Value"];
+}
+message Transactions {
+  repeated TransactionResponse data = 1;
+}
 message MerchantResponse {
   repeated MerchantData data = 1;
 }

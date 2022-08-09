@@ -10,6 +10,13 @@ type (
 		Address string `json:"address"`
 	}
 
+	Transaction struct {
+		TxHash string `json:"tx_hash"`
+		From   string `json:"from"`
+		To     string `json:"to"`
+		Value  string `json:"value"`
+	}
+
 	Link struct {
 		ID         int64  `json:"id"`
 		PluginID   string `json:"plugin_id"`
