@@ -12,11 +12,34 @@ import (
 type WebhookRepo interface {
 	CheckForAddress(ctx context.Context, address string) (bool, error)
 	InsertTransaction(ctx context.Context, data models.Transaction) (bool, error)
+	GetCoinForNetwork(ctx context.Context, address string) (*models.Asset, error)
 }
 
 type webhookRepo struct {
 	db  *sql.DB
 	ctx context.Context
+}
+
+// GetCoinForNetwork implements WebhookRepo
+func (r *webhookRepo) GetCoinForNetwork(ctx context.Context, address string) (*models.Asset, error) {
+	selectStatment := `SELECT coin, network FROM assets WHERE address='` + address + `'`
+	data, err := r.db.Query(selectStatment)
+	if err != nil {
+		fmt.Print(err)
+		return &models.Asset{}, err
+	}
+	defer data.Close()
+	var coin string
+	var network string
+	data.Next()
+	data.Scan(&coin, &network)
+	if coin != "" {
+		return &models.Asset{}, nil
+	}
+	return &models.Asset{
+		Coin:    coin,
+		Network: network,
+	}, nil
 }
 
 // CheckForAddress implements WebhookRepo

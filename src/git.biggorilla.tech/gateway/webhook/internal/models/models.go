@@ -7,4 +7,9 @@ type (
 		To     string `json:"to"`
 		Value  string `json:"value"`
 	}
+
+	Asset struct {
+		Network string `json:"network"`
+		Coin    string `json:"coin"`
+	}
 )

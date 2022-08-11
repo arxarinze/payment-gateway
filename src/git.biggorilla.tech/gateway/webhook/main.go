@@ -87,8 +87,8 @@ func main() {
 						To:     common.HexToAddress(vLog.Topics[2].String()).Hex(),
 						Value:  value.(*big.Int).String(),
 					})
-					// fmt.Println("\n", vLog.TxHash.Hex())
-					//fmt.Println("value", value)
+					fmt.Println("\n", vLog.TxHash.Hex(), " ", vLog.Address.Hex())
+					fmt.Println("value", value)
 					fmt.Println("from", common.HexToAddress(vLog.Topics[1].String()).Hex())
 					fmt.Println("to", common.HexToAddress(vLog.Topics[2].String()).Hex())
 				}
