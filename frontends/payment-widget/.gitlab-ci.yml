@@ -1,0 +1,42 @@
+development_deps:
+  stage: dependencies
+  tags:
+    - widget-dev-runner
+  only:
+    - dev
+  script:
+    - tmux kill-server&
+    - source ~/.bashrc
+    - nvm install v16.16.0
+    - npm install --global yarn
+    - cp -R frontends/payment-widget/* /var/www/payment-widget
+    - cd /var/www/payment-widget
+    - rm -f .env
+    - echo "VITE_API_CLIENT_KEY=$VITE_API_CLIENT_KEY" >> .env
+    - echo "VITE_API_URL=$VITE_API_URL" >> .env
+
+development_deploy:
+  stage: deploy
+  tags:
+    - widget-dev-runner
+  only:
+    - dev
+  script:
+    - cd /var/www/payment-widget
+    - source ~/.bashrc
+    - yarn install
+    - tmux new-session -d -s payment-widget 'yarn run dev'
+#master
+## staging_deploy:
+#   stage: deploy
+#   tags:
+#     - prod-runner
+#   only:
+#     - master
+#   script:
+#     - pkill -f tmux
+#     - cp -R * /var/www/social-service
+#     - cd /var/www/social-service
+#     - yarn install
+#     - yarn run migrate
+#     - tmux new-session -d -s social-service 'yarn run start'

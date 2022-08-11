@@ -10,3 +10,6 @@ plugins:
     opt:
       - paths=import
       - require_unimplemented_servers=false
+  - name: struct-transformer
+    out: ./
+    opt: package=transform,debug=false,goimports=true,paths=import,use-package-in-path=true

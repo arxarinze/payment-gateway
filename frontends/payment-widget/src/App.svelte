@@ -18,7 +18,7 @@
         localStorage.setItem("plugin_id", path[2])
         pluginid = path[2]
         return await axios.get(
-          "http://localhost:5001/api/v1/public/merchant/" + path[2]
+          apiUrl+"/api/v1/public/merchant/" + path[2]
         );
       } else {
         throw Error;

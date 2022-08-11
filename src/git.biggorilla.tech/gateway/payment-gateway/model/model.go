@@ -2,10 +2,19 @@ package model
 
 type (
 	Merchant struct {
-		ID     int64  `json:"id"`
-		Name   string `json:"name"`
-		Email  string `json:"email"`
-		UserID string `json:"userID"`
+		ID      int64  `json:"id"`
+		Name    string `json:"name"`
+		Email   string `json:"email"`
+		UserID  string `json:"userID"`
+		Avatar  string `json:"avatar"`
+		Address string `json:"address"`
+	}
+
+	Transaction struct {
+		TxHash string `json:"tx_hash"`
+		From   string `json:"from"`
+		To     string `json:"to"`
+		Value  string `json:"value"`
 	}
 
 	Link struct {

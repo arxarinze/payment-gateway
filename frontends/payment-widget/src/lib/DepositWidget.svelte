@@ -6,10 +6,11 @@
   import { onMount } from "svelte";
   import { fly } from "svelte/transition";
   import axios from "axios";
+  const apiUrl = import.meta.env.VITE_API_URL;
   onMount(async () => {
     console.log(plugin_id);
     let address = await axios.post(
-      "http://localhost:5001/api/v1/public/address",
+      apiUrl+"/api/v1/public/address",
       {
         crypto_symbol: data.coin.symbol,
         network: data.coin.network,

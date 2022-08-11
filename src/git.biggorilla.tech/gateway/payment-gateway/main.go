@@ -17,7 +17,7 @@ import (
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
 	pRPC "git.biggorilla.tech/gateway/payment-gateway/rpc"
-	"git.biggorilla.tech/gateway/payment-gateway/services/web3"
+	services "git.biggorilla.tech/gateway/payment-gateway/services/web3"
 	"google.golang.org/grpc"
 )
 
@@ -43,8 +43,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	ctx := context.Background()
-	jwtManager := helpers.NewJWTManager("testtest123", 15*time.Minute)
-	middleware := middleware.NewMiddleware(context.Background(), *jwtManager).UnaryInterceptor
+	jwtManager := helpers.NewJWTManager("thegfat13224234jahdkskAADJAKDJKAkjskdajdkasj@@@11111jdsdajksk!!!!!!!$$$%%#@", 15*time.Minute)
+	middleware := middleware.NewMiddleware(ctx, *jwtManager).UnaryInterceptor
 	server := grpc.NewServer(grpc.UnaryInterceptor(middleware))
 	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
 	identity := helpers.NewIdentity(ctx)

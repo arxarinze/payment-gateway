@@ -1,0 +1,51 @@
+api-development_deps:
+  stage: build
+  tags:
+    - api-gateway-dev-runner
+  only:
+    - dev
+  script:
+    - tmux kill-server&
+    - cp -R src/git.biggorilla.tech/gateway/* /var/www/src/git.biggorilla.tech/gateway
+    - cd /var/www/src/git.biggorilla.tech/gateway
+    - cd proto
+    - buf mod update
+    - cd ..
+    - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+    - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+    - go get -u -d github.com/innovation-upstream/protoc-gen-struct-transformer
+    - cd ~/go/pkg/mod/github.com/innovation-upstream/protoc-gen-struct-transformer@v1.4.2
+    - go install
+    - cd /var/www/src/git.biggorilla.tech/gateway
+    - buf generate
+    - go mod tidy
+    - cd api-gateway
+    - tmux new-session -d -s api-gateway 'go run main.go'
+    - ls
+    - cd ../payment-gateway
+    - tmux new-session -d -s payment-gateway 'go run main.go'
+    - cd ../webhook
+    - tmux new-session -d -s webhook 'go run main.go'
+
+#development_deploy:
+#   stage: deploy
+#   tags:
+#     - api-gateway-dev-runner
+#   only:
+#     - dev
+#   script:
+#     - 
+#master
+# staging_deploy:
+#   stage: deploy
+#   tags:
+#     - prod-runner
+#   only:
+#     - master
+#   script:
+#     - pkill -f tmux
+#     - cp -R * /var/www/social-service
+#     - cd /var/www/social-service
+#     - yarn install
+#     - yarn run migrate
+#     - tmux new-session -d -s social-service 'yarn run start'

@@ -14,8 +14,9 @@ type JWTManager struct {
 
 type UserClaims struct {
 	jwt.StandardClaims
+	Id       int64  `json:"id"`
 	Username string `json:"username"`
-	Role     string `json:"role"`
+	Email    string `json:"email"`
 }
 
 func NewJWTManager(secretKey string, tokenDuration time.Duration) *JWTManager {
@@ -23,23 +24,24 @@ func NewJWTManager(secretKey string, tokenDuration time.Duration) *JWTManager {
 }
 
 func (manager *JWTManager) Verify(accessToken string) (*UserClaims, error) {
-	token, err := jwt.ParseWithClaims(
+	token, err := jwt.Parse(
 		accessToken,
-		&UserClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			_, ok := token.Method.(*jwt.SigningMethodHMAC)
 			if !ok {
 				fmt.Println("error occured 1")
 				return nil, fmt.Errorf("unexpected token signing method")
 			}
-
+			fmt.Println(manager.secretKey)
 			return []byte(manager.secretKey), nil
 		},
 	)
+	fmt.Println(token)
 	if err != nil {
-		fmt.Println("error occured 2")
+		fmt.Println("error occured 2", err)
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
+
 	claims, ok := token.Claims.(*UserClaims)
 	if !ok {
 		fmt.Println("error occured 3")

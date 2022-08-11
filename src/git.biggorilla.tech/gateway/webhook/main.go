@@ -7,7 +7,12 @@ import (
 	"math/big"
 	"strings"
 
-	"git.biggorilla.tech/gateway/payment-gateway/tokens"
+	_ "github.com/lib/pq"
+
+	"git.biggorilla.tech/gateway/payment-gateway/database"
+	tether "git.biggorilla.tech/gateway/payment-gateway/tokens"
+	"git.biggorilla.tech/gateway/webhook/internal/models"
+	repo "git.biggorilla.tech/gateway/webhook/internal/repo"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,10 +21,28 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func main() {
-	client, _ := ethclient.Dial("wss://mainnet.infura.io/ws/v3/5fd8d7c598e4414690cb4f3c49abf585")
+const (
+	host     = "ec2-34-229-123-251.compute-1.amazonaws.com"
+	dbport   = 5432
+	user     = "postgres"
+	password = "Moonrider15h3r3t0st0ayFr0st1f0raw1132093@@3340@"
+	dbname   = "payment"
+)
 
-	contractAddress := common.HexToAddress("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+var (
+	psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, dbport, user, password, dbname)
+)
+
+func main() {
+	ctx := context.Background()
+	db := database.NewDatabase(ctx).ConnectDatabase(psqlInfo)
+	webhookRepo := repo.NewWebhookRepo(ctx, &db)
+	defer db.Close()
+	client, _ := ethclient.Dial("wss://ropsten.infura.io/ws/v3/5fd8d7c598e4414690cb4f3c49abf585")
+
+	contractAddress := common.HexToAddress("0xB404c51BBC10dcBE948077F18a4B8E553D160084")
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Default().Panicln(err)
@@ -47,15 +70,28 @@ func main() {
 		case err := <-sub.Err():
 			log.Default().Panicln(err)
 		case vLog := <-logs:
-			fmt.Println("\n", vLog.TxHash.Hex())
 			if vLog.Topics[0].Hex() == logTransferSigHash.Hex() {
 				data, err := contractAbi.Unpack("Transfer", vLog.Data)
 				if err != nil {
 					log.Default().Panicln(err)
 				}
-				fmt.Println("value", data)
-				fmt.Println("from", common.HexToAddress(vLog.Topics[1].String()).String())
-				fmt.Println("to", common.HexToAddress(vLog.Topics[2].String()).String())
+				isAddress, err := webhookRepo.CheckForAddress(ctx, common.HexToAddress(vLog.Topics[2].String()).String())
+				if err != nil {
+					log.Default().Panicln(err)
+				}
+				if isAddress {
+					value := data[len(data)-1]
+					webhookRepo.InsertTransaction(ctx, models.Transaction{
+						TxHash: vLog.TxHash.Hex(),
+						From:   common.HexToAddress(vLog.Topics[1].String()).Hex(),
+						To:     common.HexToAddress(vLog.Topics[2].String()).Hex(),
+						Value:  value.(*big.Int).String(),
+					})
+					fmt.Println("\n", vLog.TxHash.Hex(), " ", vLog.Address.Hex())
+					fmt.Println("value", value)
+					fmt.Println("from", common.HexToAddress(vLog.Topics[1].String()).Hex())
+					fmt.Println("to", common.HexToAddress(vLog.Topics[2].String()).Hex())
+				}
 			}
 		}
 	}

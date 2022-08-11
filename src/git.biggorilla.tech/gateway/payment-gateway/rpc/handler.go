@@ -2,20 +2,61 @@ package rpc
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"git.biggorilla.tech/gateway/payment-gateway/helpers"
 	"git.biggorilla.tech/gateway/payment-gateway/model"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
+	"git.biggorilla.tech/gateway/payment-gateway/pb/transform"
 	"git.biggorilla.tech/gateway/payment-gateway/repo"
-	"git.biggorilla.tech/gateway/payment-gateway/services/web3"
-	"google.golang.org/grpc/metadata"
+	services "git.biggorilla.tech/gateway/payment-gateway/services/web3"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 type server struct {
 	identity       helpers.Identity
 	repo           repo.MerchantRepo
 	ethereumClient services.EthereumService
+}
+
+// GetTransactions implements pb.PaymentGatewayServiceServer
+func (s *server) GetTransactions(ctx context.Context, in *pb.TransactionRequest) (*pb.Transactions, error) {
+	id := s.identity.GetIdentity(ctx)
+	data, err := s.repo.GetTransactions(ctx, in.GetMerchantId(), id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Transactions{
+		Data: transform.TransactionToPbList(*data),
+	}, nil
+}
+
+// UpdateMerchant implements pb.PaymentGatewayServiceServer
+func (s *server) UpdateMerchant(ctx context.Context, in *pb.MerchantUpdateRequest) (*pb.GenericResponse, error) {
+	id := s.identity.GetIdentity(ctx)
+	data, err := s.repo.UpdateMerchant(ctx, in.GetName(), in.GetEmail(), in.GetAddress(), in.GetAvatar(), id, in.GetMerchantId())
+	if err != nil {
+		return nil, err
+	}
+	count := data.(int64)
+	stringCount := strconv.Itoa(int(count))
+	return &pb.GenericResponse{
+		Code:    200,
+		Message: "Updated " + stringCount + " Records",
+	}, nil
+}
+
+// GetMerchant implements pb.PaymentGatewayServiceServer
+func (s *server) GetMerchants(ctx context.Context, in *emptypb.Empty) (*pb.MerchantResponse, error) {
+	id := s.identity.GetIdentity(ctx)
+	data, err := s.repo.GetMerchants(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.MerchantResponse{
+		Data: transform.MerchantToPbList(*data),
+	}, nil
 }
 
 func NewRPCInterface(ctx context.Context, identity helpers.Identity, repo repo.MerchantRepo, ethereumClient services.EthereumService) pb.PaymentGatewayServiceServer {
@@ -35,17 +76,20 @@ func (s *server) GetPublicMerchantInfo(ctx context.Context, in *pb.MerchantPubli
 }
 
 func (s *server) GetPluginLink(ctx context.Context, in *pb.PluginLinkRequest) (*pb.LinkResponse, error) {
-	auth, _ := metadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
-	link := s.repo.GetPluginLink(ctx, id, in.GetMerchantId(), in.GetType())
+	//auth, _ := metadata.FromIncomingContext(ctx)
+	id := s.identity.GetIdentity(ctx)
+	link, err := s.repo.GetPluginLink(ctx, id, in.GetMerchantId(), in.GetType())
+	if err != nil {
+		return nil, err
+	}
 	return &pb.LinkResponse{
 		Link: link,
 	}, nil
 }
 
 func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (*pb.LinkResponse, error) {
-	auth, _ := metadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
+
+	id := s.identity.GetIdentity(ctx)
 	data, err1 := s.repo.GenerateLink(ctx, in.GetMerchantId(), id)
 	if err1 != nil {
 		return &pb.LinkResponse{
@@ -58,9 +102,9 @@ func (s *server) GenerateLink(ctx context.Context, in *pb.GenerateLinkRequest) (
 	}, err1
 }
 func (s *server) CreateMerchant(ctx context.Context, in *pb.MerchantRequest) (*pb.GenericResponse, error) {
-	auth, _ := metadata.FromIncomingContext(ctx)
-	id := s.identity.GetIdentity(auth)
-	data, err1 := s.repo.CreateMerchant(ctx, in.GetName(), in.GetEmail(), id)
+	// auth, _ := metadata.FromIncomingContext(ctx)
+	id := s.identity.GetIdentity(ctx)
+	data, err1 := s.repo.CreateMerchant(ctx, in.GetName(), in.GetEmail(), in.GetAddress(), in.GetAvatar(), id)
 	if err1 != nil {
 		a := data.(*model.GenericResponse)
 		return &pb.GenericResponse{

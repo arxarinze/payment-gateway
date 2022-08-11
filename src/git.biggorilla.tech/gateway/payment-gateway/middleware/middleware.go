@@ -2,10 +2,9 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	_ "fmt"
-	_ "log"
-	"strings"
+	"net/http"
 
 	helper "git.biggorilla.tech/gateway/payment-gateway/helpers"
 	"git.biggorilla.tech/gateway/payment-gateway/pb"
@@ -44,14 +43,43 @@ func (r *middleware) UnaryInterceptor(
 	}
 	values := md["authorization"]
 	accessToken := values[0]
-	token := strings.Split(accessToken, " ")
-	_, err := r.jwtManager.Verify(token[1])
+	client := http.Client{}
+	requ, err := http.NewRequest("GET", "http://ec2-52-72-83-242.compute-1.amazonaws.com/global/verify-sso", nil)
 	if err != nil {
 		return &pb.GenericResponse{
 			Code:    403,
 			Message: "Forbidden",
 		}, nil
 	}
+
+	requ.Header = http.Header{
+		"Content-Type":  {"application/json"},
+		"Authorization": {accessToken},
+	}
+
+	res, err := client.Do(requ)
+	if err != nil {
+		return &pb.GenericResponse{
+			Code:    403,
+			Message: "Forbidden",
+		}, nil
+	}
+	var data map[string]interface{}
+	json.NewDecoder(res.Body).Decode(&data)
+	if data["status"] == false {
+		return &pb.GenericResponse{
+			Code:    403,
+			Message: "Forbidden",
+		}, nil
+	}
+	//_, err := r.jwtManager.Verify(token[1])
+
+	// if err != nil {
+	// 	return &pb.GenericResponse{
+	// 		Code:    403,
+	// 		Message: "Forbidden",
+	// 	}, nil
+	// }
 	//log.Println("love --> unary interceptor: ", claims)
-	return handler(ctx, req)
+	return handler(context.WithValue(ctx, "user", data), req)
 }

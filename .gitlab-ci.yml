@@ -1,0 +1,8 @@
+stages:
+  - dependencies
+  - build
+  - deploy
+
+include:
+  - '/frontends/payment-widget/.gitlab-ci.yml'
+  - '/src/git.biggorilla.tech/gateway/api-gateway/.gitlab-ci.yml'
