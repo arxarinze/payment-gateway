@@ -7,7 +7,9 @@
 - Setup An Infura Node or Any other Node For Web3 Calls
 - To run locally you can just run all servers from the api-gateway, payment-gateway, webhook
 - install buf to generate your protocol buffers
-- ```buf generate```
+- ```buf generate``` on each folder
+- intsall your deps by running
+- ```go mod tidy``` on each folder
 - run command below inside each terminal of each folder
 
 ```go run main.go```
